@@ -24,7 +24,7 @@ class RandomWeightsNode(OutputNode):
         self.target_class = config['target_class']
         self.to_class = np.vectorize(lambda X: self.target_class if X else "")
 
-    def set_parameters(self, feature_subset, *args, **kwargs):
+    def set_params(self, feature_subset, *args, **kwargs):
         self.feature_subset = feature_subset
         weights = []
         for feature in self.feature_subset:
@@ -33,7 +33,7 @@ class RandomWeightsNode(OutputNode):
             except KeyError:
                 # Generate weights only once per feature
                 weight = -np.log2(np.random.random())
-                self.saved_weigts[feature] = weight
+                self.saved_weights[feature] = weight
                 weights.append(weight)
         self.weights = np.array(weights)
         # Scale the actually used weights to sum to 1
@@ -41,7 +41,7 @@ class RandomWeightsNode(OutputNode):
         self.weights /= total
 
     def fit(self, feature_subset, data, target):
-        self.set_parameters(feature_subset)
+        self.set_params(feature_subset)
     
     def predict(self, data):
         used = data[:, self.feature_subset]

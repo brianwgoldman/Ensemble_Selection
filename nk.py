@@ -5,7 +5,6 @@ import sys
 def list_to_int(bitstring):
     return sum(1 << i for i, bit in enumerate(bitstring) if bit)
 
-
 def int_to_set_bits(value):
     index = 0
     result = []
@@ -13,7 +12,7 @@ def int_to_set_bits(value):
         if value & 1:
             result.append(index)
         index += 1
-        value >> 1
+        value >>= 1
     return np.array(result)
 
 
