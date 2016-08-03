@@ -1,4 +1,4 @@
-import nk_optimization
+import nk
 
 class EnsembleClassifier(object):
     def __init__(self, config):

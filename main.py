@@ -1,4 +1,4 @@
-import nk_optimization
+import nk
 import output_node
 import argparse
 import sys

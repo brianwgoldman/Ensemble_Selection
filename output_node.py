@@ -32,11 +32,14 @@ class RandomWeightsNode(OutputNode):
                 weights.append(self.saved_weights[feature])
             except KeyError:
                 # Generate weights only once per feature
-                weight = np.random.random()
+                weight = -np.log2(np.random.random())
                 self.saved_weigts[feature] = weight
                 weights.append(weight)
         self.weights = np.array(weights)
-    
+        # Scale the actually used weights to sum to 1
+        total = self.weights.sum()
+        self.weights /= total
+
     def fit(self, feature_subset, data, target):
         self.set_parameters(feature_subset)
     
