@@ -14,9 +14,6 @@ parser.add_argument('configs', metavar='Configuration Files',
 parser.add_argument('-seed', dest='seed', type=int,
                     help='Use the specified random seed used')
 
-parser.add_argument('-N', dest='N', type=int,
-                    help='The number of output nodes')
-
 parser.add_argument('-K', dest='K', type=int,
                     help='The complexity of the NK landscape')
 
@@ -49,6 +46,8 @@ digits = datasets.load_digits()
 
 training_data = digits.data
 training_target = np.array(map(str, digits.target))
+
+config['N'] = training_data.shape[1]
 
 # TODO Here you should do intermediate processing
 
