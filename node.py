@@ -1,6 +1,7 @@
 import numpy as np
 import utilities
 from sklearn import linear_model
+from collections import defaultdict, Counter
 
 class BaseNode(object):
     def set_parameters(self, feature_subset, *args, **kwargs):
@@ -16,16 +17,11 @@ def get_output_node_class(config):
     lookup = utilities.all_subclasses(BaseNode)
     return lookup[config['output_node_type']]
 
-class WeightedSum(BaseNode):
+class WeightedVote(BaseNode):
     def __init__(self, config):
         self.feature_subset = []
         self.saved_weights = {}
         self.weights = []
-        self.threshold = config['threshold']
-        assert(self.threshold is not None)
-        self.target_class = config['target_class']
-        assert(self.target_class is not None)
-        self.to_class = np.vectorize(lambda X: self.target_class if X else "")
 
     def set_params(self, feature_subset, *args, **kwargs):
         self.feature_subset = feature_subset
@@ -45,15 +41,22 @@ class WeightedSum(BaseNode):
 
     def fit(self, feature_subset, data, target):
         self.set_params(feature_subset)
+        frequencies = Counter(target)
+        self.most_common = max(frequencies.keys(), key=frequencies.get)
     
     def predict(self, data):
+        if len(self.feature_subset) == 0:
+            result = np.array([self.most_common for _ in range(data.shape[0])])
+            return result 
         used = data[:, self.feature_subset]
-        # multiply each column by its weight
-        weighted = used * self.weights
-        # sum across the column
-        output_column = weighted.sum(axis=1)
-        positives = output_column >= self.threshold
-        return self.to_class(positives)
+        # TODO This probably needs optimization
+        ballots = [defaultdict(float) for _ in range(used.shape[0])]
+        for col in range(used.shape[1]):
+            weight = self.weights[col]
+            for row in range(used.shape[0]):
+                ballots[row][used[row][col]] = weight
+        predictions = [max(vote.keys(), key=vote.get) for vote in ballots]
+        return np.array(predictions)
     
     def score(self, feature_subset, data, target):
         self.fit(feature_subset, data, target)

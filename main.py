@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import sklearn
 from ensemble_classifier import EnsembleClassifier
+from middle_layer import MiddleLayer
 # Set up argument parsing
 description = 'Ensemble Selection using NK Landscapes'
 parser = argparse.ArgumentParser(description=description)
@@ -14,6 +15,10 @@ parser.add_argument('configs', metavar='Configuration Files',
 parser.add_argument('-seed', dest='seed', type=int, nargs='?',
                     help='Use the specified random seed used')
 
+parser.add_argument('-N', dest='N', type=int,
+                    help='The size of the NK landscape')
+
+
 parser.add_argument('-K', dest='K', type=int,
                     help='The complexity of the NK landscape')
 
@@ -23,6 +28,9 @@ parser.add_argument('-output_node_type', dest='output_node_type', type=str,
 parser.add_argument('-threshold', dest='threshold', type=float,
                     help='Cutoff used for single class classification')
 
+
+parser.add_argument('-sample_percentage', dest='sample_percentage', type=float,
+                    help='Percentage of actual features used by each middle layer node')
 
 parser.add_argument('-target_class', dest='target_class', type=str,
                     help='In single class classification, the target class')
@@ -50,14 +58,15 @@ digits = datasets.load_digits()
 training_data = digits.data
 training_target = np.array(map(str, digits.target))
 
-config['N'] = training_data.shape[1]
-
 # TODO Here you should do intermediate processing
+middle = MiddleLayer(config)
+middle.fit(training_data, training_target)
+transformed_data = middle.predict(training_data)
 
 classifier = EnsembleClassifier(config)
 
 # TODO Time between each of these
-classifier.build_nk_table(training_data, training_target)
+classifier.build_nk_table(transformed_data, training_target)
 print "Table Built"
 classifier.optimize_nk()
 print "NK Optimized"
@@ -68,7 +77,9 @@ print "Configured ensemble"
 testing_data = training_data
 testing_target = training_target
 
-predictions = classifier.predict(testing_data)
+testing_data_transformed = middle.predict(testing_data)
+
+predictions = classifier.predict(testing_data_transformed)
 print "Predicted test information"
 # TODO Make this more general
 from collections import defaultdict
