@@ -1,5 +1,4 @@
 import nk
-import output_node
 import argparse
 import sys
 import numpy as np
@@ -11,7 +10,8 @@ parser = argparse.ArgumentParser(description=description)
 parser.add_argument('configs', metavar='Configuration Files',
                     type=str, nargs='*',
                     help='Zero or more json formatted files containing' + ' configuration information')
-parser.add_argument('-seed', dest='seed', type=int,
+
+parser.add_argument('-seed', dest='seed', type=int, nargs='?',
                     help='Use the specified random seed used')
 
 parser.add_argument('-K', dest='K', type=int,
@@ -27,6 +27,9 @@ parser.add_argument('-threshold', dest='threshold', type=float,
 parser.add_argument('-target_class', dest='target_class', type=str,
                     help='In single class classification, the target class')
 
+parser.add_argument('-linear_classifier', dest='linear_classifier',
+                    type=str, nargs='?',
+                    help='Specify which linear classifier to use')
 
 config = vars(parser.parse_args())
 # TODO Read all config files into config
@@ -55,19 +58,27 @@ classifier = EnsembleClassifier(config)
 
 # TODO Time between each of these
 classifier.build_nk_table(training_data, training_target)
+print "Table Built"
 classifier.optimize_nk()
+print "NK Optimized"
 classifier.configure_outputs()
+print "Configured ensemble"
 
 # TODO Load test data for real
 testing_data = training_data
 testing_target = training_target
 
 predictions = classifier.predict(testing_data)
-
+print "Predicted test information"
 # TODO Make this more general
 from collections import defaultdict
 confusion = defaultdict(int)
 for prediction, actual in zip(predictions, testing_target):
     confusion[prediction, actual] += 1
+correct = 0
 for pair, count in confusion.items():
     print pair, count
+    if pair[0] == pair[1]:
+        correct += count
+
+print float(correct) / predictions.shape[0]

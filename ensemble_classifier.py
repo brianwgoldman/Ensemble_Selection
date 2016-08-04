@@ -1,5 +1,5 @@
 import nk
-import output_node
+import node
 import numpy as np
 from collections import defaultdict
 
@@ -7,12 +7,12 @@ class EnsembleClassifier(object):
     def __init__(self, config):
         self.N = config['N']
         self.K = config['K']
-        output_class = output_node.get_output_node_class(config)
+        output_class = node.get_output_node_class(config)
         self.outputs = [output_class(config) for _ in range(self.N)]
     
     def build_nk_table(self, data, target):
         patterns = 2 << self.K
-        self.nk_table = np.empty((self.N, patterns), dtype="float")
+        self.nk_table = np.zeros((self.N, patterns), dtype="float")
         for i in range(self.N):
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
@@ -29,7 +29,7 @@ class EnsembleClassifier(object):
         for i in range(self.N):
             index = nk.list_to_int(circular[i:i + self.K + 1])
             self.output_scores[i] = self.nk_table[i][index]
-            feature_subset = [j for j in range(self.K + 1) if circular[i + j]]
+            feature_subset = [(i + j) % self.N for j in range(self.K + 1) if circular[i + j]]
             self.outputs[i].set_params(feature_subset)
     
     def predict(self, data):
