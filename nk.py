@@ -5,6 +5,7 @@ import sys
 def list_to_int(bitstring):
     return sum(1 << i for i, bit in enumerate(bitstring) if bit)
 
+
 def int_to_set_bits(value):
     index = 0
     result = []
@@ -155,8 +156,7 @@ if __name__ == "__main__":
     nk_table = np.random.rand(N, 2 << K)
     dynamic_answer = dynamic_programming(nk_table, K)
     print "Dynamic programming says quality is:", evaluate(nk_table, K, dynamic_answer)
-    
+
     brute_answer = brute_force(nk_table, K)
     print "Brute force says quality is:       :", evaluate(nk_table, K, brute_answer)
     assert((dynamic_answer == brute_answer).all())
-    

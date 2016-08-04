@@ -3,21 +3,29 @@ import utilities
 from sklearn import linear_model
 from collections import defaultdict, Counter
 
+
 class BaseNode(object):
+
     def set_parameters(self, feature_subset, *args, **kwargs):
         raise NotImplementedError()
+
     def fit(self, feature_subset, data, target):
         raise NotImplementedError()
+
     def predict(self, data):
         raise NotImplementedError()
+
     def score(self, feature_subset, data, target):
         raise NotImplementedError()
+
 
 def get_output_node_class(config):
     lookup = utilities.all_subclasses(BaseNode)
     return lookup[config['output_node_type']]
 
+
 class WeightedVote(BaseNode):
+
     def __init__(self, config):
         self.feature_subset = []
         self.saved_weights = {}
@@ -43,11 +51,11 @@ class WeightedVote(BaseNode):
         self.set_params(feature_subset)
         frequencies = Counter(target)
         self.most_common = max(frequencies.keys(), key=frequencies.get)
-    
+
     def predict(self, data):
         if len(self.feature_subset) == 0:
             result = np.array([self.most_common for _ in range(data.shape[0])])
-            return result 
+            return result
         used = data[:, self.feature_subset]
         # TODO This probably needs optimization
         ballots = [defaultdict(float) for _ in range(used.shape[0])]
@@ -57,7 +65,7 @@ class WeightedVote(BaseNode):
                 ballots[row][used[row][col]] = weight
         predictions = [max(vote.keys(), key=vote.get) for vote in ballots]
         return np.array(predictions)
-    
+
     def score(self, feature_subset, data, target):
         self.fit(feature_subset, data, target)
         estimates = self.predict(data)
@@ -65,10 +73,13 @@ class WeightedVote(BaseNode):
         return sum(estimate == actual
                    for estimate, actual in zip(estimates, target))
 
+
 class SKLearn(BaseNode):
+
     def __init__(self, config):
         self.classifier_class = vars(linear_model)[config['linear_classifier']]
         self.stored_classifiers = {}
+
     def set_params(self, feature_subset, *args, **kwargs):
         as_tuple = tuple(sorted(feature_subset))
         self.feature_subset = as_tuple

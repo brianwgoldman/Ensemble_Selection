@@ -1,8 +1,6 @@
-import nk
 import argparse
 import sys
 import numpy as np
-import sklearn
 from ensemble_classifier import EnsembleClassifier
 from middle_layer import MiddleLayer
 # Set up argument parsing
@@ -10,7 +8,8 @@ description = 'Ensemble Selection using NK Landscapes'
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('configs', metavar='Configuration Files',
                     type=str, nargs='*',
-                    help='Zero or more json formatted files containing' + ' configuration information')
+                    help='Zero or more json formatted files containing' +\
+                    ' configuration information')
 
 parser.add_argument('-seed', dest='seed', type=int, nargs='?',
                     help='Use the specified random seed used')

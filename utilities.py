@@ -3,4 +3,4 @@ def all_subclasses(cls):
     recurse = [all_subclasses(subclass) for subclass in result.values()]
     for r in recurse:
         result.update(r)
-    return result 
+    return result
