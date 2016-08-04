@@ -8,7 +8,7 @@ description = 'Ensemble Selection using NK Landscapes'
 parser = argparse.ArgumentParser(description=description)
 parser.add_argument('configs', metavar='Configuration Files',
                     type=str, nargs='*',
-                    help='Zero or more json formatted files containing' +\
+                    help='Zero or more json formatted files containing' +
                     ' configuration information')
 
 parser.add_argument('-seed', dest='seed', type=int, nargs='?',
