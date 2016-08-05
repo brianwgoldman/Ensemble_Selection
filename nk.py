@@ -104,7 +104,7 @@ def dynamic_programming(nk_table, K):
                     # tie
                     next_function[next_function_entry] = zero_quality
                     best_bit_choice[n][next_function_entry] = False
-                    print "A tie happened"
+                    print "A tie happened", n, zero_quality
                 else:
                     # One was better
                     next_function[next_function_entry] = one_quality
@@ -130,7 +130,7 @@ def dynamic_programming(nk_table, K):
         if previous_function[pattern] > previous_function[best_pattern]:
             # TODO Probably need a list of patterns to deal with ties
             best_pattern = pattern
-
+    print "Expected:", previous_function[best_pattern] / N
     # Extract a global optimum
     solution = np.zeros(N, dtype="bool")
     k_bits = (1 << K) - 1

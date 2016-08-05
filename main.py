@@ -3,6 +3,8 @@ import sys
 import numpy as np
 from ensemble_classifier import EnsembleClassifier
 from middle_layer import MiddleLayer
+from utilities import split_dataset
+from sklearn import linear_model
 # Set up argument parsing
 description = 'Ensemble Selection using NK Landscapes'
 parser = argparse.ArgumentParser(description=description)
@@ -52,15 +54,18 @@ np.random.seed(seed)
 
 # TODO Replace this with proper loading of data files
 from sklearn import datasets
-digits = datasets.load_digits()
+dataset = datasets.load_digits()
 
-training_data = digits.data
-training_target = np.array(map(str, digits.target))
+train, test = split_dataset(dataset.data, dataset.target, 0.7)
+training_data, training_target = train
+testing_data, testing_target = test
 
-# TODO Here you should do intermediate processing
+
+# Intermediate processing
 middle = MiddleLayer(config)
 middle.fit(training_data, training_target)
 transformed_data = middle.predict(training_data)
+print "Transformed Data"
 
 classifier = EnsembleClassifier(config)
 
@@ -68,14 +73,11 @@ classifier = EnsembleClassifier(config)
 classifier.build_nk_table(transformed_data, training_target)
 print "Table Built"
 classifier.optimize_nk()
-print "NK Optimized"
+print "NK Optimized", classifier.selected
 classifier.configure_outputs()
 print "Configured ensemble"
 
 # TODO Load test data for real
-testing_data = training_data
-testing_target = training_target
-
 testing_data_transformed = middle.predict(testing_data)
 
 predictions = classifier.predict(testing_data_transformed)
@@ -91,4 +93,6 @@ for pair, count in confusion.items():
     if pair[0] == pair[1]:
         correct += count
 
-print float(correct) / predictions.shape[0]
+print "Ensemble:", float(correct) / predictions.shape[0]
+clf = linear_model.LogisticRegression()
+print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
