@@ -1,11 +1,13 @@
 import numpy as np
 
+
 def all_subclasses(cls):
     result = {subclass.__name__: subclass for subclass in cls.__subclasses__()}
     recurse = [all_subclasses(subclass) for subclass in result.values()]
     for r in recurse:
         result.update(r)
     return result
+
 
 def split_dataset(data, target, percentage):
     assert(data.shape[0] == target.shape[0])
