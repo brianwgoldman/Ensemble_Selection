@@ -5,44 +5,54 @@ from ensemble_classifier import EnsembleClassifier
 from middle_layer import MiddleLayer
 from utilities import split_dataset
 from sklearn import linear_model
+import json
+
 # Set up argument parsing
 description = 'Ensemble Selection using NK Landscapes'
 parser = argparse.ArgumentParser(description=description)
-parser.add_argument('configs', metavar='Configuration Files',
-                    type=str, nargs='*',
+parser.add_argument('cfg_input_files', metavar='Configuration Files',
+                    type=str, nargs='*', default=[],
                     help='Zero or more json formatted files containing' +
                     ' configuration information')
 
-parser.add_argument('-seed', dest='seed', type=int, nargs='?',
+parser.add_argument('-cfg_out', type=str, nargs='?',
+                    help='File name used to write out the final configuration')
+
+parser.add_argument('-seed', type=int, nargs='?',
                     help='Use the specified random seed used')
 
-parser.add_argument('-N', dest='N', type=int,
+parser.add_argument('-N', type=int,
                     help='The size of the NK landscape')
 
 
-parser.add_argument('-K', dest='K', type=int,
+parser.add_argument('-K', type=int,
                     help='The complexity of the NK landscape')
 
-parser.add_argument('-output_node_type', dest='output_node_type', type=str,
+parser.add_argument('-output_node_type', type=str,
                     help='What type of output nodes to use')
 
-parser.add_argument('-threshold', dest='threshold', type=float,
+parser.add_argument('-threshold', type=float,
                     help='Cutoff used for single class classification')
 
 
-parser.add_argument('-sample_percentage', dest='sample_percentage', type=float,
+parser.add_argument('-sample_percentage', type=float,
                     help='Percentage of actual features used by each middle layer node')
 
-parser.add_argument('-target_class', dest='target_class', type=str,
+parser.add_argument('-target_class', type=str,
                     help='In single class classification, the target class')
 
-parser.add_argument('-linear_classifier', dest='linear_classifier',
+parser.add_argument('-linear_classifier',
                     type=str, nargs='?',
                     help='Specify which linear classifier to use')
 
-config = vars(parser.parse_args())
-# TODO Read all config files into config
-
+command_line = vars(parser.parse_args())
+config = {}
+for configfile in command_line['cfg_input_files']:
+    print "Loading", configfile
+    with open(configfile, "r") as f:
+        config.update(json.load(f))
+# This ensures the command line overwrites the config files
+config.update(command_line)
 try:
     seed = config['seed']
 except KeyError:
@@ -50,7 +60,10 @@ except KeyError:
     config['seed'] = seed
 np.random.seed(seed)
 
-# TODO Save config to a file for duplication purposes
+# Saves the configuration to a file so this experiment can be duplicated
+if config['cfg_out'] != None and config['cfg_out'] != "none":
+    with open(config['cfg_out'], 'w') as f:
+        json.dump(config, f, indent=4, sort_keys=True)
 
 # TODO Replace this with proper loading of data files
 from sklearn import datasets

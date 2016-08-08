@@ -16,7 +16,7 @@ class EnsembleClassifier(object):
         patterns = 2 << self.K
         self.nk_table = np.zeros((self.N, patterns), dtype="float")
         for i in range(self.N):
-            print "Starting column", i, "of", self.N, " in the NK table"
+            print "Starting column", i, "of", self.N, "in the NK table"
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
                 absolute_indexes = [(i + r) % self.N for r in relative_indexes]
