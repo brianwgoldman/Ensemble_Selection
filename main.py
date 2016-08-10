@@ -2,9 +2,9 @@ import argparse
 import sys
 import numpy as np
 from ensemble_classifier import EnsembleClassifier
-from middle_layer import MiddleLayer
+from middle_layer import MiddleLayer, RandomizeLayer
 from utilities import split_dataset
-from sklearn import linear_model
+from sklearn import linear_model, svm
 import json
 
 # Set up argument parsing
@@ -109,3 +109,5 @@ for pair, count in confusion.items():
 print "Ensemble:", float(correct) / predictions.shape[0]
 clf = linear_model.LogisticRegression()
 print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
+clf = svm.SVC()
+print "BasicSVM:", clf.fit(training_data, training_target).score(testing_data, testing_target)

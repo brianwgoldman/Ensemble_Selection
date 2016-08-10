@@ -13,7 +13,8 @@ class MiddleLayer(object):
 
     def fit(self, data, target):
         sample_size = int(math.ceil(data.shape[1] * self.sample_percentage))
-        for output in self.outputs:
+        for i, output in enumerate(self.outputs):
+            print "Starting middle layer output", i, "of", len(self.outputs)
             feature_subset = np.random.choice(data.shape[1], sample_size,
                                               replace=False)
             output.fit(feature_subset, data, target)
@@ -21,3 +22,14 @@ class MiddleLayer(object):
     def predict(self, data):
         columns = [output.predict(data) for output in self.outputs]
         return np.vstack(columns).transpose()
+
+class RandomizeLayer(MiddleLayer):
+
+    def __init__(self, config):
+        pass
+
+    def fit(self, data, target):
+        self.new_order = np.random.permutation(data.shape[1])
+
+    def predict(self, data):
+        return data[:, self.new_order]

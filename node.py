@@ -1,6 +1,6 @@
 import numpy as np
 import utilities
-from sklearn import linear_model
+from sklearn import linear_model, svm
 from collections import defaultdict, Counter
 
 
@@ -71,13 +71,15 @@ class WeightedVote(BaseNode):
         estimates = self.predict(data)
         # extract only the used columns
         return sum(estimate == actual
-                   for estimate, actual in zip(estimates, target))
+                   for estimate, actual in zip(estimates, target)) / float(len(target))
 
 
 class SKLearn(BaseNode):
 
     def __init__(self, config):
-        self.classifier_class = vars(linear_model)[config['linear_classifier']]
+        # TODO Make configuration more flexible
+        #self.classifier_class = vars(linear_model)[config['linear_classifier']]
+        self.classifier_class = svm.SVC
         self.stored_classifiers = {}
 
     def set_params(self, feature_subset, *args, **kwargs):
@@ -93,11 +95,22 @@ class SKLearn(BaseNode):
 
     def fit(self, feature_subset, data, target):
         self.set_params(feature_subset)
-        self.classifier.fit(data[:, self.feature_subset], target)
+        frequencies = Counter(target)
+        self.most_common = max(frequencies.keys(), key=frequencies.get)
+        if len(self.feature_subset) > 0:
+            self.classifier.fit(data[:, self.feature_subset], target)
 
     def predict(self, data):
+        if len(self.feature_subset) == 0:
+            result = np.array([self.most_common for _ in range(data.shape[0])])
+            return result
         return self.classifier.predict(data[:, self.feature_subset])
 
     def score(self, feature_subset, data, target):
         self.fit(feature_subset, data, target)
-        return self.classifier.score(data[:, self.feature_subset], target)
+        # TODO Handle 0 feature more gracefully
+        if len(self.feature_subset) > 0:
+            return self.classifier.score(data[:, self.feature_subset], target)
+        else:
+            predictions = self.predict(data)
+            return sum(estimate == actual for estimate, actual in zip(predictions, target)) / target.shape[0]
