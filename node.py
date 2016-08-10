@@ -78,8 +78,8 @@ class SKLearn(BaseNode):
 
     def __init__(self, config):
         # TODO Make configuration more flexible
-        #self.classifier_class = vars(linear_model)[config['linear_classifier']]
-        self.classifier_class = svm.SVC
+        self.classifier_class = vars(linear_model)[config['linear_classifier']]
+        #self.classifier_class = svm.SVC
         self.stored_classifiers = {}
 
     def set_params(self, feature_subset, *args, **kwargs):

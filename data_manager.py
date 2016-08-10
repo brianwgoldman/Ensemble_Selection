@@ -11,7 +11,7 @@ def create_subproblem(input_folder, num_classes, output_filename, **_):
         for filename in subset_files:
             print(filename, file=f)
 
-def load_subproblem(input_filename, **_):
+def load_problem(input_filename, **_):
     with open(input_filename, 'r') as f:
         subset_files = f.read().strip().split()
     target = []

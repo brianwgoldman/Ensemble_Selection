@@ -5,6 +5,7 @@ from ensemble_classifier import EnsembleClassifier
 from middle_layer import MiddleLayer, RandomizeLayer
 from utilities import split_dataset
 from sklearn import linear_model, svm
+import data_manager
 import json
 
 # Set up argument parsing
@@ -27,6 +28,13 @@ parser.add_argument('-N', type=int,
 
 parser.add_argument('-K', type=int,
                     help='The complexity of the NK landscape')
+
+parser.add_argument('-problem_file', type=str,
+                    help='What problem file to use, should contain a list of .npy classes')
+
+parser.add_argument('-training_percentage', type=float, default=0.7,
+                    help='Percentage of all data to use during training')
+
 
 parser.add_argument('-output_node_type', type=str,
                     help='What type of output nodes to use')
@@ -66,10 +74,9 @@ if config['cfg_out'] != None and config['cfg_out'] != "none":
         json.dump(config, f, indent=4, sort_keys=True)
 
 # TODO Replace this with proper loading of data files
-from sklearn import datasets
-dataset = datasets.load_digits()
+data, target = data_manager.load_problem(config['problem_file'])
 
-train, test = split_dataset(dataset.data, dataset.target, 0.7)
+train, test = split_dataset(data, target, config['training_percentage'])
 training_data, training_target = train
 testing_data, testing_target = test
 
@@ -79,7 +86,6 @@ middle = MiddleLayer(config)
 middle.fit(training_data, training_target)
 transformed_data = middle.predict(training_data)
 print "Transformed Data"
-
 classifier = EnsembleClassifier(config)
 
 # TODO Time between each of these
@@ -90,9 +96,7 @@ print "NK Optimized", classifier.selected
 classifier.configure_outputs()
 print "Configured ensemble"
 
-# TODO Load test data for real
 testing_data_transformed = middle.predict(testing_data)
-
 predictions = classifier.predict(testing_data_transformed)
 print "Predicted test information"
 # TODO Make this more general
