@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from ensemble_classifier import EnsembleClassifier
 from middle_layer import MiddleLayer, RandomizeLayer
-from utilities import split_dataset
+from utilities import even_class_split_dataset
 from sklearn import linear_model, svm
 import data_manager
 import json
@@ -76,7 +76,7 @@ if config['cfg_out'] != None and config['cfg_out'] != "none":
 # TODO Replace this with proper loading of data files
 data, target = data_manager.load_problem(config['problem_file'])
 
-train, test = split_dataset(data, target, config['training_percentage'])
+train, test = even_class_split_dataset(data, target, config['training_percentage'])
 training_data, training_target = train
 testing_data, testing_target = test
 
@@ -106,7 +106,7 @@ for prediction, actual in zip(predictions, testing_target):
     confusion[prediction, actual] += 1
 correct = 0
 for pair, count in confusion.items():
-    print pair, count
+    #print pair, count
     if pair[0] == pair[1]:
         correct += count
 

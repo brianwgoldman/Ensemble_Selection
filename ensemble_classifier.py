@@ -3,6 +3,7 @@ import node
 import numpy as np
 from collections import defaultdict
 import math
+from utilities import even_class_split_dataset
 
 
 class EnsembleClassifier(object):
@@ -19,12 +20,13 @@ class EnsembleClassifier(object):
         self.nk_table = np.zeros((self.N, patterns), dtype="float")
         for i in range(self.N):
             print "Starting column", i, "of", self.N, "in the NK table"
-            row_subset = np.random.choice(data.shape[0], row_sample_size, replace=False)
+            #row_subset = np.random.choice(data.shape[0], row_sample_size, replace=False)
+            train, test = even_class_split_dataset(data, target, 0.75)
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
                 absolute_indexes = [(i + r) % self.N for r in relative_indexes]
-                self.outputs[i].fit(absolute_indexes, data[row_subset, :], target[row_subset])
-                quality = self.outputs[i].score(absolute_indexes, data, target)
+                self.outputs[i].fit(absolute_indexes, train[0], train[1])
+                quality = self.outputs[i].score(absolute_indexes, test[0], test[1])
                 self.nk_table[i, pattern] = quality
 
     def optimize_nk(self):
