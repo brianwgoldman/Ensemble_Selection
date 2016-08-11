@@ -105,9 +105,11 @@ class SKLearn(BaseNode):
             result = np.array([self.most_common for _ in range(data.shape[0])])
             return result
         return self.classifier.predict(data[:, self.feature_subset])
+    
+    def predict_proba(self, data):
+        return self.classifier.predict_proba(data[:, self.feature_subset])
 
     def score(self, feature_subset, data, target):
-        self.fit(feature_subset, data, target)
         # TODO Handle 0 feature more gracefully
         if len(self.feature_subset) > 0:
             return self.classifier.score(data[:, self.feature_subset], target)

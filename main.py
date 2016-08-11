@@ -82,7 +82,7 @@ testing_data, testing_target = test
 
 
 # Intermediate processing
-middle = MiddleLayer(config)
+middle = RandomizeLayer(config)
 middle.fit(training_data, training_target)
 transformed_data = middle.predict(training_data)
 print "Transformed Data"
@@ -92,12 +92,12 @@ classifier = EnsembleClassifier(config)
 classifier.build_nk_table(transformed_data, training_target)
 print "Table Built"
 classifier.optimize_nk()
-print "NK Optimized", classifier.selected
+print "NK Optimized", classifier.selected, classifier.selected.sum()
 classifier.configure_outputs()
 print "Configured ensemble"
 
 testing_data_transformed = middle.predict(testing_data)
-predictions = classifier.predict(testing_data_transformed)
+predictions = classifier.predict_using_numbers(testing_data_transformed)
 print "Predicted test information"
 # TODO Make this more general
 from collections import defaultdict

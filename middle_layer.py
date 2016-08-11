@@ -13,11 +13,13 @@ class MiddleLayer(object):
 
     def fit(self, data, target):
         sample_size = int(math.ceil(data.shape[1] * self.sample_percentage))
+        row_sample_size = int(math.ceil(data.shape[0] * 0.9))
         for i, output in enumerate(self.outputs):
             print "Starting middle layer output", i, "of", len(self.outputs)
             feature_subset = np.random.choice(data.shape[1], sample_size,
                                               replace=False)
-            output.fit(feature_subset, data, target)
+            row_subset = np.random.choice(data.shape[0], row_sample_size, replace=False)
+            output.fit(feature_subset, data[row_subset, :], target[row_subset])
 
     def predict(self, data):
         columns = [output.predict(data) for output in self.outputs]

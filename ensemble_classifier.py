@@ -2,6 +2,7 @@ import nk
 import node
 import numpy as np
 from collections import defaultdict
+import math
 
 
 class EnsembleClassifier(object):
@@ -14,12 +15,15 @@ class EnsembleClassifier(object):
 
     def build_nk_table(self, data, target):
         patterns = 2 << self.K
+        row_sample_size = int(math.ceil(data.shape[0] * 0.5))
         self.nk_table = np.zeros((self.N, patterns), dtype="float")
         for i in range(self.N):
             print "Starting column", i, "of", self.N, "in the NK table"
+            row_subset = np.random.choice(data.shape[0], row_sample_size, replace=False)
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
                 absolute_indexes = [(i + r) % self.N for r in relative_indexes]
+                self.outputs[i].fit(absolute_indexes, data[row_subset, :], target[row_subset])
                 quality = self.outputs[i].score(absolute_indexes, data, target)
                 self.nk_table[i, pattern] = quality
 
@@ -45,3 +49,16 @@ class EnsembleClassifier(object):
                 votes[r][labels[r]] += weight
         result = [max(vote.keys(), key=vote.get) for vote in votes]
         return np.array(result)
+
+    def predict_using_numbers(self, data):
+        to_class = self.outputs[0].classifier.classes_
+        probs = np.zeros([data.shape[0], to_class.shape[0]])
+        for o in range(self.N):
+            assert((to_class == self.outputs[o].classifier.classes_).all())
+            output_probs = self.outputs[o].predict_proba(data)
+            weight = self.output_scores[0]
+            probs += (output_probs * weight)
+        print probs[:10, :]
+        columns = np.argmax(probs, axis=1)
+        #print columns
+        return to_class[columns]
