@@ -108,7 +108,7 @@ classifier.configure_outputs()
 print "Configured ensemble"
 
 testing_data_transformed = middle.predict(testing_data)
-predictions = classifier.predict_using_numbers(testing_data_transformed)
+predictions = classifier.predict(testing_data_transformed)
 print "Predicted test information"
 # TODO Make this more general
 from collections import defaultdict
@@ -117,8 +117,8 @@ for prediction, actual in zip(predictions, testing_target):
     confusion[prediction, actual] += 1
 correct = 0
 for pair, count in confusion.items():
-    #print pair, count
     if pair[0] == pair[1]:
+        print pair, count
         correct += count
 
 print "Ensemble:", float(correct) / predictions.shape[0]
@@ -127,4 +127,6 @@ clf = linear_model.LogisticRegression()
 print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
 clf = svm.SVC()
 print "BasicSVM:", clf.fit(training_data, training_target).score(testing_data, testing_target)
-'''
+clf = linear_model.Perceptron()
+print "Perceptn:", clf.fit(training_data, training_target).score(testing_data, testing_target)
+#'''

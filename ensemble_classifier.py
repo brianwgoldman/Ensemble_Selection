@@ -21,12 +21,14 @@ class EnsembleClassifier(object):
         for i in range(self.N):
             print "Starting column", i, "of", self.N, "in the NK table"
             #row_subset = np.random.choice(data.shape[0], row_sample_size, replace=False)
-            train, test = even_class_split_dataset(data, target, 0.75)
+            #train, test = even_class_split_dataset(data, target, 0.75)
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
                 absolute_indexes = [(i + r) % self.N for r in relative_indexes]
-                self.outputs[i].fit(absolute_indexes, train[0], train[1])
-                quality = self.outputs[i].score(absolute_indexes, test[0], test[1])
+                #self.outputs[i].fit(absolute_indexes, train[0], train[1])
+                #quality = self.outputs[i].score(absolute_indexes, test[0], test[1])
+                self.outputs[i].fit(absolute_indexes, data, target)
+                quality = self.outputs[i].score(absolute_indexes, data, target)
                 self.nk_table[i, pattern] = quality
 
     def optimize_nk(self):
@@ -41,6 +43,7 @@ class EnsembleClassifier(object):
             feature_subset = [(i + j) % self.N for j in
                               range(self.K + 1) if circular[i + j]]
             self.outputs[i].set_params(feature_subset)
+        print "Best single output estimate:", max(self.output_scores)
 
     def predict(self, data):
         votes = [defaultdict(float) for _ in range(data.shape[0])]
@@ -53,10 +56,10 @@ class EnsembleClassifier(object):
         return np.array(result)
 
     def predict_using_numbers(self, data):
-        to_class = self.outputs[0].classifier.classes_
+        to_class = self.outputs[0].classes_
         probs = np.zeros([data.shape[0], to_class.shape[0]])
         for o in range(self.N):
-            assert((to_class == self.outputs[o].classifier.classes_).all())
+            assert((to_class == self.outputs[o].classes_).all())
             output_probs = self.outputs[o].decision_function(data)
             weight = self.output_scores[0]
             probs += (output_probs * weight)
