@@ -116,3 +116,49 @@ class SKLearn(BaseNode):
         else:
             predictions = self.predict(data)
             return sum(estimate == actual for estimate, actual in zip(predictions, target)) / target.shape[0]
+
+
+class RandomWeights(BaseNode):
+
+    def __init__(self, config):
+        self.feature_subset = []
+        self.saved_weights = {}
+        self.weights = {}
+
+    def get_weight(self, feature, cls):
+        try:
+            return self.weights[feature, cls]
+        except:
+            w = np.random.uniform(-1, 1)
+            self.weights[feature, cls] = w
+            return w
+
+    def set_params(self, feature_subset, *args, **kwargs):
+        self.feature_subset = feature_subset
+
+    def fit(self, feature_subset, data, target):
+        self.set_params(feature_subset)
+        frequencies = Counter(target)
+        self.most_common = max(frequencies.keys(), key=frequencies.get)
+        self.classes_ = np.array(sorted(frequencies.keys()))
+
+    def predict(self, data):
+        if len(self.feature_subset) == 0:
+            result = np.array([self.most_common for _ in range(data.shape[0])])
+            return result
+        used = data[:, self.feature_subset]
+        selected_weights = np.empty((len(self.feature_subset), len(self.classes_)))
+        for i, feature in enumerate(self.feature_subset):
+            for j, cls in enumerate(self.classes_):
+                selected_weights[i, j] = self.get_weight(feature, cls)
+        decision_functions = np.dot(used, selected_weights)
+        selected = decision_functions.argmax(axis=1)
+        assert(selected.shape[0] == data.shape[0])
+        return self.classes_[selected]
+
+    def score(self, feature_subset, data, target):
+        self.fit(feature_subset, data, target)
+        estimates = self.predict(data)
+        # extract only the used columns
+        return sum(estimate == actual
+                   for estimate, actual in zip(estimates, target)) / float(len(target))
