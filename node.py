@@ -106,8 +106,8 @@ class SKLearn(BaseNode):
             return result
         return self.classifier.predict(data[:, self.feature_subset])
     
-    def predict_proba(self, data):
-        return self.classifier.predict_proba(data[:, self.feature_subset])
+    def decision_function(self, data):
+        return self.classifier.decision_function(data[:, self.feature_subset])
 
     def score(self, feature_subset, data, target):
         # TODO Handle 0 feature more gracefully

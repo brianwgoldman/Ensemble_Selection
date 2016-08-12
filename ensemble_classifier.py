@@ -57,7 +57,7 @@ class EnsembleClassifier(object):
         probs = np.zeros([data.shape[0], to_class.shape[0]])
         for o in range(self.N):
             assert((to_class == self.outputs[o].classifier.classes_).all())
-            output_probs = self.outputs[o].predict_proba(data)
+            output_probs = self.outputs[o].decision_function(data)
             weight = self.output_scores[0]
             probs += (output_probs * weight)
         print probs[:10, :]
