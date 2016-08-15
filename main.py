@@ -74,23 +74,22 @@ if config['cfg_out'] != None and config['cfg_out'] != "none":
         json.dump(config, f, indent=4, sort_keys=True)
 
 # TODO Replace this with proper loading of data files
-'''
-data, target = data_manager.load_problem(config['problem_file'])
+if config['problem_file'] is not None:
+    data, target = data_manager.load_problem(config['problem_file'])
 
-train, test = even_class_split_dataset(data, target, config['training_percentage'])
-training_data, training_target = train
-testing_data, testing_target = test
-'''
-with open("fixed/train_data.npy", "r") as f:
-    training_data = np.load(f)
-with open("fixed/train_target.npy", "r") as f:
-    training_target = np.load(f)
+    train, test = even_class_split_dataset(data, target, config['training_percentage'])
+    training_data, training_target = train
+    testing_data, testing_target = test
+else:
+    with open("fixed/train_data.npy", "r") as f:
+        training_data = np.load(f)
+    with open("fixed/train_target.npy", "r") as f:
+        training_target = np.load(f)
 
-with open("fixed/test_data.npy", "r") as f:
-    testing_data = np.load(f)
-with open("fixed/test_target.npy", "r") as f:
-    testing_target = np.load(f)
-
+    with open("fixed/test_data.npy", "r") as f:
+        testing_data = np.load(f)
+    with open("fixed/test_target.npy", "r") as f:
+        testing_target = np.load(f)
 
 # Intermediate processing
 middle = RandomizeLayer(config)
