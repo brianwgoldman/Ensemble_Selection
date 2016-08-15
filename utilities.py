@@ -1,5 +1,6 @@
 import numpy as np
 from collections import defaultdict, Counter
+from math import log
 
 
 def all_subclasses(cls):
@@ -44,3 +45,13 @@ def even_class_split_dataset(data, target, percentage):
     #'''
     return ((data[first_indexes, :], target[first_indexes]),
             (data[second_indexes, :], target[second_indexes]))
+
+
+def entropy(X):
+    total = float(sum(X))
+    return -sum(x / total * log(x / total, 2) for x in X if x != 0)
+
+
+def weighted_entropy(list_of_lists):
+    grand_total = float(sum(sum(X) for X in list_of_lists))
+    return sum(sum(X) / grand_total * entropy(X) for X in list_of_lists)
