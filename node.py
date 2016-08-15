@@ -124,41 +124,60 @@ class RandomWeights(BaseNode):
         self.feature_subset = []
         self.saved_weights = {}
         self.weights = {}
+        self.probability_store = {}
+        self.probabilities = []
 
-    def get_weight(self, feature, cls):
+    def get_weight(self, feature):
         try:
-            return self.weights[feature, cls]
+            return self.weights[feature]
         except:
             w = np.random.uniform(-1, 1)
-            self.weights[feature, cls] = w
+            self.weights[feature] = w
             return w
 
     def set_params(self, feature_subset, *args, **kwargs):
-        self.feature_subset = feature_subset
+        as_tuple = tuple(sorted(feature_subset))
+        self.feature_subset = as_tuple
+        # get the existing classifier
+        try:
+            self.probabilities = self.probability_store[as_tuple]
+        except KeyError:
+            self.probabilities = None
+
+    def bin_data(self, data):
+        if len(self.feature_subset) == 0:
+            return np.zeros(data.shape[0], dtype="int")
+        used = data[:, self.feature_subset]
+        selected_weights = np.empty(len(self.feature_subset))
+        for i, feature in enumerate(self.feature_subset):
+            selected_weights[i] = self.get_weight(feature)
+        product = np.dot(used, selected_weights)
+        assert(product.shape[0] == data.shape[0])
+        result = (product > 0).astype('int')
+        #print result
+        return result
+
 
     def fit(self, feature_subset, data, target):
         self.set_params(feature_subset)
-        frequencies = Counter(target)
-        self.most_common = max(frequencies.keys(), key=frequencies.get)
-        self.classes_ = np.array(sorted(frequencies.keys()))
+        self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {cls : np.where(cls == self.classes_)[0][0] for cls in self.classes_}
+        bin_guide = self.bin_data(data)
+        self.probabilities = np.zeros((2, self.classes_.shape[0]))
+        for i, bin_val in enumerate(bin_guide):
+            self.probabilities[int(bin_val)][self.cls_to_index[target[i]]] += 1
+        self.probability_store[self.feature_subset] = self.probabilities
+
+    def decision_function(self, data):
+        bin_guide = self.bin_data(data)
+        return self.probabilities[bin_guide]
 
     def predict(self, data):
-        if len(self.feature_subset) == 0:
-            result = np.array([self.most_common for _ in range(data.shape[0])])
-            return result
-        used = data[:, self.feature_subset]
-        selected_weights = np.empty((len(self.feature_subset), len(self.classes_)))
-        for i, feature in enumerate(self.feature_subset):
-            for j, cls in enumerate(self.classes_):
-                selected_weights[i, j] = self.get_weight(feature, cls)
-        decision_functions = np.dot(used, selected_weights)
-        selected = decision_functions.argmax(axis=1)
+        selected = self.decision_function(data).argmax(axis=1)
         assert(selected.shape[0] == data.shape[0])
         return self.classes_[selected]
 
     def score(self, feature_subset, data, target):
         self.fit(feature_subset, data, target)
-        estimates = self.predict(data)
-        # extract only the used columns
-        return sum(estimate == actual
-                   for estimate, actual in zip(estimates, target)) / float(len(target))
+        result = utilities.weighted_entropy(self.probabilities)
+        return utilities.weighted_entropy([Counter(target).values()]) - result

@@ -61,9 +61,30 @@ class EnsembleClassifier(object):
         for o in range(self.N):
             assert((to_class == self.outputs[o].classes_).all())
             output_probs = self.outputs[o].decision_function(data)
-            weight = self.output_scores[0]
+            weight = self.output_scores[o]
             probs += (output_probs * weight)
         print probs[:10, :]
+        columns = np.argmax(probs, axis=1)
+        #print columns
+        return to_class[columns]
+
+    def probility_versus_real(self, data, target):
+        to_class = self.outputs[0].classes_
+        probs = np.zeros([data.shape[0], to_class.shape[0]])
+        for o in range(self.N):
+            assert((to_class == self.outputs[o].classes_).all())
+            output_probs = self.outputs[o].decision_function(data)
+            weight = self.output_scores[o]
+            probs += (output_probs * weight)
+        scores = defaultdict(int)
+        grand_total = probs.sum()
+        for r in range(data.shape[0]):
+            #total = probs[r, :].sum()
+            for c in range(probs.shape[1]):
+                scores[to_class[c], target[r]] += probs[r, c] / grand_total
+        correct = sum([value if estimate == actual else 0 for (estimate, actual), value in scores.items()])
+        print "Correct percentage", correct
+        #sys.exit()
         columns = np.argmax(probs, axis=1)
         #print columns
         return to_class[columns]
