@@ -100,16 +100,16 @@ def dynamic_programming(nk_table, K):
                 if zero_quality > one_quality:
                     # Zero was better
                     next_function[next_function_entry] = zero_quality
-                    best_bit_choice[n][next_function_entry] = False
+                    best_bit_choice[n, next_function_entry] = False
                 elif zero_quality == one_quality:
                     # tie
                     next_function[next_function_entry] = zero_quality
-                    best_bit_choice[n][next_function_entry] = False
+                    best_bit_choice[n, next_function_entry] = False
                     #print "A tie happened", n, zero_quality
                 else:
                     # One was better
                     next_function[next_function_entry] = one_quality
-                    best_bit_choice[n][next_function_entry] = True
+                    best_bit_choice[n, next_function_entry] = True
         previous_function, next_function = next_function, previous_function
 
     # previous_function is now wide enough to score all remaining patterns
