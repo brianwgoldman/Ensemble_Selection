@@ -105,7 +105,7 @@ def dynamic_programming(nk_table, K):
                     # tie
                     next_function[next_function_entry] = zero_quality
                     best_bit_choice[n, next_function_entry] = False
-                    #print "A tie happened", n, zero_quality
+                    # print "A tie happened", n, zero_quality
                 else:
                     # One was better
                     next_function[next_function_entry] = one_quality

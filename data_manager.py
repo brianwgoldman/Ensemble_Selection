@@ -4,12 +4,14 @@ from glob import glob
 from os import path, makedirs
 from collections import defaultdict
 
+
 def create_subproblem(input_folder, num_classes, output_filename, **_):
     class_files = glob(path.join(input_folder, "*.npy"))
     subset_files = np.random.choice(class_files, num_classes, replace=False)
     with open(output_filename, 'w') as f:
         for filename in subset_files:
             print(filename, file=f)
+
 
 def load_problem(input_filename, **_):
     with open(input_filename, 'r') as f:
@@ -30,8 +32,9 @@ def load_problem(input_filename, **_):
     target = np.array(target)
     return data, target
 
+
 def create_class_files(groundtruth_file, input_folder, output_folder, **_):
-    makedirs(output_folder) # TODO Consider providing helpful error messages
+    makedirs(output_folder)  # TODO Consider providing helpful error messages
     with open(groundtruth_file, 'r') as f:
         lines = f.read().strip().split('\n')
 

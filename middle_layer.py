@@ -18,12 +18,14 @@ class MiddleLayer(object):
             print "Starting middle layer output", i, "of", len(self.outputs)
             feature_subset = np.random.choice(data.shape[1], sample_size,
                                               replace=False)
-            row_subset = np.random.choice(data.shape[0], row_sample_size, replace=False)
+            row_subset = np.random.choice(data.shape[0], row_sample_size,
+                                          replace=False)
             output.fit(feature_subset, data[row_subset, :], target[row_subset])
 
     def predict(self, data):
         columns = [output.predict(data) for output in self.outputs]
         return np.vstack(columns).transpose()
+
 
 class RandomizeLayer(MiddleLayer):
 

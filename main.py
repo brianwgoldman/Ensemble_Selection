@@ -97,7 +97,7 @@ classifier.configure_outputs()
 print "Configured ensemble"
 
 testing_data_transformed = middle.predict(testing_data)
-predictions = classifier.probility_versus_real(testing_data_transformed, testing_target)
+predictions = classifier.predict_using_numbers(testing_data_transformed)
 print "Predicted test information"
 # TODO Make this more general
 from collections import defaultdict

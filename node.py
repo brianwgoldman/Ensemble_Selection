@@ -105,7 +105,7 @@ class SKLearn(BaseNode):
             result = np.array([self.most_common for _ in range(data.shape[0])])
             return result
         return self.classifier.predict(data[:, self.feature_subset])
-    
+
     def decision_function(self, data):
         return self.classifier.decision_function(data[:, self.feature_subset])
 
@@ -153,15 +153,13 @@ class RandomWeights(BaseNode):
             selected_weights[i] = self.get_weight(feature)
         product = np.dot(used, selected_weights)
         assert(product.shape[0] == data.shape[0])
-        result = (product > 0).astype('int')
-        #print result
-        return result
-
+        return (product > 0).astype('int')
 
     def fit(self, feature_subset, data, target):
         self.set_params(feature_subset)
         self.classes_ = np.array(sorted(set(target)))
-        self.cls_to_index = {cls : np.where(cls == self.classes_)[0][0] for cls in self.classes_}
+        self.cls_to_index = {cls: np.where(cls == self.classes_)[0][0]
+                             for cls in self.classes_}
         bin_guide = self.bin_data(data)
         self.probabilities = np.zeros((2, self.classes_.shape[0]))
         for i, bin_val in enumerate(bin_guide):
