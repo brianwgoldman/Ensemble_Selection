@@ -4,7 +4,21 @@ import numpy as np
 from collections import defaultdict
 
 
-class EnsembleClassifier(object):
+class BaseClassifier(object):
+    def __init__(self, config):
+        raise NotImplementedError()
+
+    def fit(self, data, target):
+        raise NotImplementedError()
+
+    def predict(self, data):
+        raise NotImplementedError()
+
+    def predict_using_numbers(self, data):
+        raise NotImplementedError()
+
+
+class EnsembleClassifier(BaseClassifier):
 
     def __init__(self, config):
         self.N = config['N']
@@ -36,7 +50,12 @@ class EnsembleClassifier(object):
             feature_subset = [(i + j) % self.N for j in
                               range(self.K + 1) if circular[i + j]]
             self.outputs[i].set_params(feature_subset)
-        print "Best single output estimate:", max(self.output_scores)
+        print "Best single output estimate:", max(self.output_scores), self.output_scores.mean()
+
+    def fit(self, data, target):
+        self.build_nk_table(data, target)
+        self.optimize_nk()
+        self.configure_outputs()
 
     def predict(self, data):
         votes = [defaultdict(float) for _ in range(data.shape[0])]
@@ -58,3 +77,83 @@ class EnsembleClassifier(object):
             probs += (output_probs * weight)
         columns = np.argmax(probs, axis=1)
         return to_class[columns]
+
+
+class MultiEnsembleClassifier(BaseClassifier):
+
+    def __init__(self, config):
+        self.N = config['N']
+        self.K = config['K']
+        output_class = node.get_output_node_class(config)
+        self.outputs = [output_class(config) for _ in range(self.N)]
+        self.patterns = 2 << self.K
+        self.class_masks = {}
+        self.output_scores = {}
+        self.configure_patterns = {}
+
+    def pattern_to_indexes(self, pattern, i):
+        relative_indexes = nk.int_to_set_bits(pattern)
+        return [(i + r) % self.N for r in relative_indexes]
+
+    def fit(self, data, target):
+        self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {cls: np.where(cls == self.classes_)[0][0]
+                             for cls in self.classes_}
+
+        for i in range(self.N):
+            print "Starting output", i, "of", self.N
+            for pattern in range(self.patterns):
+                absolute_indexes = self.pattern_to_indexes(pattern, i)
+                self.outputs[i].fit(absolute_indexes, data, target)
+        for i, cls in enumerate(self.classes_):
+            print "Solving NK Table for class", i, "of", len(self.classes_)
+            self.solve_nk_table(cls)
+
+    def solve_nk_table(self, cls):
+        nk_table = np.zeros((self.N, self.patterns), dtype="float")
+        for i in range(self.N):
+            for pattern in range(self.patterns):
+                absolute_indexes = self.pattern_to_indexes(pattern, i)
+                quality = self.outputs[i].score_class(absolute_indexes, cls)
+                nk_table[i, pattern] = quality
+        selected = nk.dynamic_programming(nk_table, self.K)
+        output_scores = np.empty([self.N], dtype="float")
+        configure_patterns = []
+        circular = np.concatenate([selected, selected])
+        for i in range(self.N):
+            index = nk.list_to_int(circular[i:i + self.K + 1])
+            output_scores[i] = nk_table[i][index]
+            feature_subset = [(i + j) % self.N for j in
+                              range(self.K + 1) if circular[i + j]]
+            configure_patterns.append(feature_subset)
+        self.class_masks[cls] = selected
+        self.output_scores[cls] = output_scores
+        self.configure_patterns[cls] = configure_patterns
+
+    def get_class_probabilities(self, data, cls):
+        column = self.cls_to_index[cls]
+        total_weight = 0
+        weights = self.output_scores[cls]
+        patterns = self.configure_patterns[cls]
+        probs = np.zeros(data.shape[0])
+        zeros = 0
+        for i in range(self.N):
+            if weights[i] > 0:
+                self.outputs[i].set_params(patterns[i])
+                # Get only the target classes output probabilities
+                output_probs = self.outputs[i].decision_function(data)[:, column]
+                probs += (output_probs * weights[i])
+                total_weight += weights[i]
+            else:
+                zeros += 1
+        print "Expected percentage in this class:", (probs / total_weight).mean()
+        print "Zeros:", zeros
+        return probs / total_weight
+
+    def predict_using_numbers(self, data):
+        probs = np.empty((data.shape[0], self.classes_.shape[0]))
+        for i, cls in enumerate(self.classes_):
+            print "Predicting class", i, "of", len(self.classes_)
+            probs[:, i] = self.get_class_probabilities(data, cls)
+        columns = np.argmax(probs, axis=1)
+        return self.classes_[columns]

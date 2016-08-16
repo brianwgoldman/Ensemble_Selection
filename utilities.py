@@ -48,4 +48,10 @@ def weighted_entropy(list_of_lists):
     grand_total = float(sum(sum(X) for X in list_of_lists))
     return sum(sum(X) / grand_total * entropy(X) for X in list_of_lists)
 
+
+def counts_to_probabilities(counts):
+    totals = counts.sum(axis=1)[:, None]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        return np.where(totals == 0, 0, np.true_divide(counts, totals))
+
 # TODO Do test case style main like in nk.py

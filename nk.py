@@ -79,7 +79,7 @@ def dynamic_programming(nk_table, K):
     # "n" is the bit position we are currently trying to remove.
     # You could also say at the end of this loop the problem size will be n.
     for n in range(N - 1, dependencies - 1, -1):
-        print "Removing variable", n, "from the NK Table"
+        #print "Removing variable", n, "from the NK Table"
         for before_wrap in powk_values:
             for after_wrap in powk_values:
                 # quality of setting bit "n" to zero and one.
