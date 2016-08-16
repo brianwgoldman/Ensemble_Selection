@@ -2,7 +2,7 @@ import argparse
 import sys
 import numpy as np
 from ensemble_classifier import EnsembleClassifier
-from middle_layer import MiddleLayer, RandomizeLayer
+import middle_layer
 from utilities import even_class_split_dataset
 from sklearn import linear_model, svm
 import data_manager
@@ -82,7 +82,7 @@ testing_data, testing_target = test
 
 
 # Intermediate processing
-middle = RandomizeLayer(config)
+middle = middle_layer.RandomizeLayer(config)
 middle.fit(training_data, training_target)
 transformed_data = middle.predict(training_data)
 print "Transformed Data"

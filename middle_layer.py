@@ -37,3 +37,17 @@ class RandomizeLayer(MiddleLayer):
 
     def predict(self, data):
         return data[:, self.new_order]
+
+
+class DoubleRandomizeLayer(MiddleLayer):
+
+    def __init__(self, config):
+        pass
+
+    def fit(self, data, target):
+        first = np.random.permutation(data.shape[1])
+        second = np.random.permutation(data.shape[1])
+        self.new_order = np.concatenate([first, second])
+
+    def predict(self, data):
+        return data[:, self.new_order]

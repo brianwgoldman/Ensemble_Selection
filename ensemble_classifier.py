@@ -2,8 +2,6 @@ import nk
 import node
 import numpy as np
 from collections import defaultdict
-import math
-from utilities import even_class_split_dataset
 
 
 class EnsembleClassifier(object):
