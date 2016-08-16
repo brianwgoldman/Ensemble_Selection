@@ -4,7 +4,6 @@ import numpy as np
 import ensemble_classifier
 import middle_layer
 from utilities import even_class_split_dataset, all_subclasses
-from sklearn import linear_model, svm
 import data_manager
 import json
 
@@ -24,6 +23,10 @@ parser.add_argument('-seed', type=int, nargs='?',
 
 parser.add_argument('-N', type=int,
                     help='The size of the NK landscape')
+
+
+parser.add_argument('-compare', action="store_true",
+                    help='Include this flag to compare with SKLearn classifiers')
 
 
 parser.add_argument('-K', type=int,
@@ -118,11 +121,11 @@ for pair, count in confusion.items():
         correct += count
 
 print "Ensemble:", float(correct) / predictions.shape[0]
-'''
-clf = linear_model.LogisticRegression()
-print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
-clf = svm.SVC()
-print "BasicSVM:", clf.fit(training_data, training_target).score(testing_data, testing_target)
-clf = linear_model.Perceptron()
-print "Perceptn:", clf.fit(training_data, training_target).score(testing_data, testing_target)
-#'''
+if config['compare']:
+    from sklearn import linear_model, svm
+    clf = linear_model.LogisticRegression()
+    print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
+    clf = svm.SVC()
+    print "BasicSVM:", clf.fit(training_data, training_target).score(testing_data, testing_target)
+    clf = linear_model.Perceptron()
+    print "Perceptn:", clf.fit(training_data, training_target).score(testing_data, testing_target)
