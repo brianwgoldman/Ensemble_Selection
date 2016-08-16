@@ -16,17 +16,12 @@ class EnsembleClassifier(object):
 
     def build_nk_table(self, data, target):
         patterns = 2 << self.K
-        row_sample_size = int(math.ceil(data.shape[0] * 0.5))
         self.nk_table = np.zeros((self.N, patterns), dtype="float")
         for i in range(self.N):
             print "Starting column", i, "of", self.N, "in the NK table"
-            #row_subset = np.random.choice(data.shape[0], row_sample_size, replace=False)
-            #train, test = even_class_split_dataset(data, target, 0.75)
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
                 absolute_indexes = [(i + r) % self.N for r in relative_indexes]
-                #self.outputs[i].fit(absolute_indexes, train[0], train[1])
-                #quality = self.outputs[i].score(absolute_indexes, test[0], test[1])
                 self.outputs[i].fit(absolute_indexes, data, target)
                 quality = self.outputs[i].score(absolute_indexes, data, target)
                 self.nk_table[i, pattern] = quality
