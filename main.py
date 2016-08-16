@@ -1,9 +1,9 @@
 import argparse
 import sys
 import numpy as np
-from ensemble_classifier import EnsembleClassifier
-from middle_layer import MiddleLayer, RandomizeLayer
-from utilities import even_class_split_dataset
+import ensemble_classifier
+import middle_layer
+from utilities import even_class_split_dataset, all_subclasses
 from sklearn import linear_model, svm
 import data_manager
 import json
@@ -38,6 +38,9 @@ parser.add_argument('-training_percentage', type=float, default=0.7,
 
 parser.add_argument('-output_node_type', type=str,
                     help='What type of output nodes to use')
+
+parser.add_argument('-ensemble', type=str,
+                    help='What type of ensemble to use')
 
 parser.add_argument('-threshold', type=float,
                     help='Cutoff used for single class classification')
@@ -92,22 +95,16 @@ else:
         testing_target = np.load(f)
 
 # Intermediate processing
-middle = RandomizeLayer(config)
+middle = middle_layer.RandomizeLayer(config)
 middle.fit(training_data, training_target)
 transformed_data = middle.predict(training_data)
 print "Transformed Data"
-classifier = EnsembleClassifier(config)
+classifier = all_subclasses(ensemble_classifier.BaseClassifier)[config['ensemble']](config)
 
-# TODO Time between each of these
-classifier.build_nk_table(transformed_data, training_target)
-print "Table Built"
-classifier.optimize_nk()
-print "NK Optimized", classifier.selected, classifier.selected.sum()
-classifier.configure_outputs()
-print "Configured ensemble"
+classifier.fit(transformed_data, training_target)
 
 testing_data_transformed = middle.predict(testing_data)
-predictions = classifier.probility_versus_real(testing_data_transformed, testing_target)
+predictions = classifier.predict_using_numbers(testing_data_transformed)
 print "Predicted test information"
 # TODO Make this more general
 from collections import defaultdict

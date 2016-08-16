@@ -105,7 +105,7 @@ class SKLearn(BaseNode):
             result = np.array([self.most_common for _ in range(data.shape[0])])
             return result
         return self.classifier.predict(data[:, self.feature_subset])
-    
+
     def decision_function(self, data):
         return self.classifier.decision_function(data[:, self.feature_subset])
 
@@ -124,6 +124,7 @@ class RandomWeights(BaseNode):
         self.feature_subset = []
         self.saved_weights = {}
         self.weights = {}
+        # TODO Rename probabilities to "count", as that is what it stores
         self.probability_store = {}
         self.probabilities = []
 
@@ -153,24 +154,25 @@ class RandomWeights(BaseNode):
             selected_weights[i] = self.get_weight(feature)
         product = np.dot(used, selected_weights)
         assert(product.shape[0] == data.shape[0])
-        result = (product > 0).astype('int')
-        #print result
-        return result
-
+        return (product > 0).astype('int')
 
     def fit(self, feature_subset, data, target):
         self.set_params(feature_subset)
         self.classes_ = np.array(sorted(set(target)))
-        self.cls_to_index = {cls : np.where(cls == self.classes_)[0][0] for cls in self.classes_}
+        self.cls_to_index = {cls: np.where(cls == self.classes_)[0][0]
+                             for cls in self.classes_}
         bin_guide = self.bin_data(data)
-        self.probabilities = np.zeros((2, self.classes_.shape[0]))
+        counts = np.zeros((2, self.classes_.shape[0]))
         for i, bin_val in enumerate(bin_guide):
-            self.probabilities[int(bin_val)][self.cls_to_index[target[i]]] += 1
+            counts[bin_val][self.cls_to_index[target[i]]] += 1
+        self.probabilities = counts
         self.probability_store[self.feature_subset] = self.probabilities
+        self.base_entropy = utilities.weighted_entropy([Counter(target).values()])
 
     def decision_function(self, data):
         bin_guide = self.bin_data(data)
-        return self.probabilities[bin_guide]
+        # TODO Consider removing normalization to save time
+        return utilities.counts_to_probabilities(self.probabilities[bin_guide])
 
     def predict(self, data):
         selected = self.decision_function(data).argmax(axis=1)
@@ -180,4 +182,18 @@ class RandomWeights(BaseNode):
     def score(self, feature_subset, data, target):
         self.fit(feature_subset, data, target)
         result = utilities.weighted_entropy(self.probabilities)
-        return utilities.weighted_entropy([Counter(target).values()]) - result
+        return self.base_entropy - result
+
+    def score_class(self, feature_subset, cls):
+        self.set_params(feature_subset)
+        new_bins = []
+        index = self.cls_to_index[cls]
+        for bin_prob in self.probabilities:
+            # TODO If you go to real probabilities, you can remove the sum
+            non_class = bin_prob.sum() - bin_prob[index]
+            new_bins.append([non_class, bin_prob[index]])
+        result = utilities.weighted_entropy(new_bins)
+        joined = [[new_bins[0][0] + new_bins[1][0],
+                  new_bins[0][1] + new_bins[1][1]]]
+        base_entropy = utilities.weighted_entropy(joined)
+        return base_entropy - result
