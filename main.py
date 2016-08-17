@@ -79,7 +79,6 @@ if config['cfg_out'] != None and config['cfg_out'] != "none":
     with open(config['cfg_out'], 'w') as f:
         json.dump(config, f, indent=4, sort_keys=True)
 
-# TODO Replace this with proper loading of data files
 if config['problem_file'] is not None:
     data, target = data_manager.load_problem(config['problem_file'])
 

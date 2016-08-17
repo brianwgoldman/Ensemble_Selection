@@ -30,24 +30,16 @@ class MiddleLayer(object):
 class RandomizeLayer(MiddleLayer):
 
     def __init__(self, config):
-        pass
+        self.N = config['N']
 
     def fit(self, data, target):
-        self.new_order = np.random.permutation(data.shape[1])
-
-    def predict(self, data):
-        return data[:, self.new_order]
-
-
-class DoubleRandomizeLayer(MiddleLayer):
-
-    def __init__(self, config):
-        pass
-
-    def fit(self, data, target):
-        first = np.random.permutation(data.shape[1])
-        second = np.random.permutation(data.shape[1])
-        self.new_order = np.concatenate([first, second])
+        blocks = []
+        size = 0
+        step = data.shape[1]
+        while size < self.N:
+            blocks.append(np.random.permutation(step))
+            size += step
+        self.new_order = np.concatenate(blocks)[:self.N]
 
     def predict(self, data):
         return data[:, self.new_order]

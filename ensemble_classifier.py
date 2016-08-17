@@ -67,7 +67,7 @@ class EnsembleClassifier(BaseClassifier):
         result = [max(vote.keys(), key=vote.get) for vote in votes]
         return np.array(result)
 
-    def predict_using_numbers(self, data):
+    def decision_function(self, data):
         to_class = self.outputs[0].classes_
         probs = np.zeros([data.shape[0], to_class.shape[0]])
         for o in range(self.N):
@@ -75,8 +75,12 @@ class EnsembleClassifier(BaseClassifier):
             output_probs = self.outputs[o].decision_function(data)
             weight = self.output_scores[o]
             probs += (output_probs * weight)
+        return probs
+
+    def predict_using_numbers(self, data):
+        probs = self.decision_function(data)
         columns = np.argmax(probs, axis=1)
-        return to_class[columns]
+        return self.outputs[0].classes_[columns]
 
 
 class MultiEnsembleClassifier(BaseClassifier):
@@ -155,5 +159,31 @@ class MultiEnsembleClassifier(BaseClassifier):
         for i, cls in enumerate(self.classes_):
             print "Predicting class", i, "of", len(self.classes_)
             probs[:, i] = self.get_class_probabilities(data, cls)
+        columns = np.argmax(probs, axis=1)
+        return self.classes_[columns]
+
+
+class EntirelySeparate(BaseClassifier):
+
+    def __init__(self, config):
+        self.N = config['N']
+        self.config = config
+
+    def fit(self, data, target):
+        self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {cls: np.where(cls == self.classes_)[0][0]
+                             for cls in self.classes_}
+        # Build an entire classifier for each class
+        self.classifiers = [EnsembleClassifier(self.config)
+                            for _ in self.classes_]
+        for clf in self.classifiers:
+            clf.fit(data, target)
+            # Save on memory
+            clf.nk_table = None
+
+    def predict_using_numbers(self, data):
+        probs = np.zeros((data.shape[0], self.classes_.shape[0]))
+        for clf in self.classifiers:
+            probs += clf.decision_function(data)
         columns = np.argmax(probs, axis=1)
         return self.classes_[columns]
