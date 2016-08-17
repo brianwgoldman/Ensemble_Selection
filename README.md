@@ -24,9 +24,7 @@ This will create a "problem" with 41 random classes (instead of the full 1000).
 
 There are a lot of configuration options, a lot of which don't work together. But this should work:
 
-```python main.py -N 50 -K 4 -problem_file problem_with_41_classes.txt -sample_percentage 0.3 -output_node_type WeightedVote -linear_classifier LogisticRegression```
-
+```python main.py -problem_file problem_with_41_classes.txt -N 2048 -K 3 -output_node_type RandomWeights -ensemble NKClassifier```
 This will load the problem_file=problem_with_41_classes.txt problem.
-It will create a middle layer of N=50 linear_classifier=LogisticRegression classifiers, each using sample_percentage=0.3 percent
-of the problem variables drawn at random. These will create an NK landscape with K=4, with each output node using an
-output_node_type=WeightedVote to combine its inputs.
+It will randomly order the N=2048 variables and create one output_node_type=RandomWeights classifier for each.
+It will use the ensemble=NKClassifier method to train a single bitstring.

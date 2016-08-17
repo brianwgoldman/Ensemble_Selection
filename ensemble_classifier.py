@@ -18,7 +18,7 @@ class BaseClassifier(object):
         raise NotImplementedError()
 
 
-class EnsembleClassifier(BaseClassifier):
+class NKClassifier(BaseClassifier):
 
     def __init__(self, config):
         self.N = config['N']
@@ -83,7 +83,7 @@ class EnsembleClassifier(BaseClassifier):
         return self.outputs[0].classes_[columns]
 
 
-class MultiEnsembleClassifier(BaseClassifier):
+class NKClassifierOVR(BaseClassifier):
 
     def __init__(self, config):
         self.N = config['N']
@@ -163,7 +163,7 @@ class MultiEnsembleClassifier(BaseClassifier):
         return self.classes_[columns]
 
 
-class EntirelySeparate(BaseClassifier):
+class SeparateNKClassifier(BaseClassifier):
 
     def __init__(self, config):
         self.N = config['N']
@@ -174,7 +174,7 @@ class EntirelySeparate(BaseClassifier):
         self.cls_to_index = {cls: np.where(cls == self.classes_)[0][0]
                              for cls in self.classes_}
         # Build an entire classifier for each class
-        self.classifiers = [EnsembleClassifier(self.config)
+        self.classifiers = [NKClassifier(self.config)
                             for _ in self.classes_]
         for clf in self.classifiers:
             clf.fit(data, target)
