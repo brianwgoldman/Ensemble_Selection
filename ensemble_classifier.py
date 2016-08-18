@@ -145,7 +145,7 @@ class NKClassifierOVR(BaseClassifier):
             if weights[i] > 0:
                 self.outputs[i].set_params(patterns[i])
                 # Get only the target classes output probabilities
-                output_probs = self.outputs[i].decision_function(data)[:, column]
+                output_probs = self.outputs[i].decision_function_class(data, cls)
                 probs += (output_probs * weights[i])
                 total_weight += weights[i]
             else:

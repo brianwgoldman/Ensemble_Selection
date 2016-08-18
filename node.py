@@ -142,8 +142,10 @@ class RandomWeights(BaseNode):
         # get the existing classifier
         try:
             self.probabilities = self.probability_store[as_tuple]
+            self.actual_probs = utilities.counts_to_probabilities(self.probabilities)
         except KeyError:
             self.probabilities = None
+            self.actual_probs = None
 
     def bin_data(self, data):
         if len(self.feature_subset) == 0:
@@ -168,11 +170,17 @@ class RandomWeights(BaseNode):
         self.probabilities = counts
         self.probability_store[self.feature_subset] = self.probabilities
         self.base_entropy = utilities.weighted_entropy([Counter(target).values()])
+        self.actual_probs = utilities.counts_to_probabilities(self.probabilities)
 
     def decision_function(self, data):
         bin_guide = self.bin_data(data)
+        return self.actual_probs[bin_guide]
+
+    def decision_function_class(self, data, cls):
+        bin_guide = self.bin_data(data)
         # TODO Consider removing normalization to save time
-        return utilities.counts_to_probabilities(self.probabilities[bin_guide])
+        cls_probs = self.actual_probs[:, self.cls_to_index[cls]]
+        return cls_probs[bin_guide]
 
     def predict(self, data):
         selected = self.decision_function(data).argmax(axis=1)
