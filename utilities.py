@@ -1,6 +1,7 @@
 import numpy as np
 from collections import defaultdict
 from math import log
+import time
 
 
 def all_subclasses(cls):
@@ -53,5 +54,14 @@ def counts_to_probabilities(counts):
     totals = counts.sum(axis=1)[:, None]
     with np.errstate(divide="ignore", invalid="ignore"):
         return np.where(totals == 0, 0, np.true_divide(counts, totals))
+
+
+def show_completion(iterable, length, message):
+    start_time = time.clock()
+    for i, x in enumerate(iterable):
+        yield x
+        elapsed = time.clock() - start_time
+        time_per_loop = (elapsed / (i + 1)) / 60
+        print message, "minutes remaining", time_per_loop * (length - i - 1)
 
 # TODO Do test case style main like in nk.py

@@ -2,6 +2,7 @@ import nk
 import node
 import numpy as np
 from collections import defaultdict
+import utilities
 
 
 class BaseClassifier(object):
@@ -29,8 +30,8 @@ class NKClassifier(BaseClassifier):
     def build_nk_table(self, data, target):
         patterns = 2 << self.K
         self.nk_table = np.zeros((self.N, patterns), dtype="float")
-        for i in range(self.N):
-            print "Starting column", i, "of", self.N, "in the NK table"
+        for i in utilities.show_completion(range(self.N), self.N, "NK Table"):
+            # print "Starting column", i, "of", self.N, "in the NK table"
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
                 absolute_indexes = [(i + r) % self.N for r in relative_indexes]

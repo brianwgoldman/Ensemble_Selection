@@ -180,7 +180,7 @@ class RandomWeights(BaseNode):
         return self.classes_[selected]
 
     def score(self, feature_subset, data, target):
-        self.fit(feature_subset, data, target)
+        self.set_params(feature_subset)
         result = utilities.weighted_entropy(self.probabilities)
         return self.base_entropy - result
 
