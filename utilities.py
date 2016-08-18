@@ -58,11 +58,16 @@ def counts_to_probabilities(counts):
 
 def show_completion(iterable, length, message):
     start_time = time.clock()
+    previous = None
     for i, x in enumerate(iterable):
         yield x
         elapsed = time.clock() - start_time
         time_per_loop = (elapsed / (i + 1)) / 60
+        assert(i < length)
         remaining = round(time_per_loop * (length - i - 1), 2)
-        print message, "minutes remaining", remaining
+        if previous != remaining:
+            print message, "minutes remaining", remaining
+            previous = remaining
+    print message, "complete"
 
 # TODO Do test case style main like in nk.py

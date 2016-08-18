@@ -72,9 +72,10 @@ class NKClassifier(BaseClassifier):
         probs = np.zeros([data.shape[0], to_class.shape[0]])
         for o in range(self.N):
             assert((to_class == self.outputs[o].classes_).all())
-            output_probs = self.outputs[o].decision_function(data)
             weight = self.output_scores[o]
-            probs += (output_probs * weight)
+            if weight != 0:
+                output_probs = self.outputs[o].decision_function(data)
+                probs += (output_probs * weight)
         return probs
 
     def predict_using_numbers(self, data):
@@ -186,3 +187,50 @@ class SeparateNKClassifier(BaseClassifier):
             probs += clf.decision_function(data)
         columns = np.argmax(probs, axis=1)
         return self.classes_[columns]
+
+
+def make_outputs(config, data, target):
+    N = config['N']
+    K = config['K']
+    produced = 0
+    while produced < N:
+        number = np.random.choice(K) + 1
+        indexes = np.random.choice(data.shape[1], number, replace=False)
+        output = node.RandomWeights(config)
+        output.fit(indexes, data, target)
+        score = output.score(indexes, data, target)
+        if score > 0:
+            yield output, score
+            produced += 1
+
+
+class SelectedForest(BaseClassifier):
+
+    def __init__(self, config):
+        self.N = config['N']
+        self.K = config['K']
+        self.config = config
+
+    def fit(self, data, target):
+        gen = make_outputs(self.config, data, target)
+        self.outputs = []
+        self.output_scores = []
+        for output, score in show_completion(gen, self.N, "Generating Trees"):
+            self.outputs.append(output)
+            self.output_scores.append(score)
+
+    def decision_function(self, data):
+        to_class = self.outputs[0].classes_
+        probs = np.zeros([data.shape[0], to_class.shape[0]])
+        O = len(self.outputs)
+        for o in show_completion(range(O), O, "Aggregating outputs"):
+            assert((to_class == self.outputs[o].classes_).all())
+            output_probs = self.outputs[o].decision_function(data)
+            weight = self.output_scores[o]
+            probs += (output_probs * weight)
+        return probs
+
+    def predict_using_numbers(self, data):
+        probs = self.decision_function(data)
+        columns = np.argmax(probs, axis=1)
+        return self.outputs[0].classes_[columns]

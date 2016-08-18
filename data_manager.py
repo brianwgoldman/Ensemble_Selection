@@ -17,18 +17,14 @@ def load_problem(input_filename, **_):
     with open(input_filename, 'r') as f:
         subset_files = f.read().strip().split()
     target = []
+    data = []
     for filename in subset_files:
         with open(filename, "r") as f:
             class_data = np.load(f)
         class_label = path.splitext(path.basename(filename))[0]
         target.extend([class_label] * class_data.shape[0])
-        # This try except block is used to create "data" initialized
-        # to the very first file's "class_data"
-        try:
-            data = np.vstack([data, class_data])
-        except NameError:
-            data = class_data
-
+        data.append(class_data)
+    data = np.vstack(data)
     target = np.array(target)
     return data, target
 
