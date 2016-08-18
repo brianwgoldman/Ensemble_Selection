@@ -62,6 +62,7 @@ def show_completion(iterable, length, message):
         yield x
         elapsed = time.clock() - start_time
         time_per_loop = (elapsed / (i + 1)) / 60
-        print message, "minutes remaining", time_per_loop * (length - i - 1)
+        remaining = round(time_per_loop * (length - i - 1), 2)
+        print message, "minutes remaining", remaining
 
 # TODO Do test case style main like in nk.py

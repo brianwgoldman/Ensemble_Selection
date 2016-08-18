@@ -2,7 +2,7 @@ import nk
 import node
 import numpy as np
 from collections import defaultdict
-import utilities
+from utilities import show_completion
 
 
 class BaseClassifier(object):
@@ -30,8 +30,7 @@ class NKClassifier(BaseClassifier):
     def build_nk_table(self, data, target):
         patterns = 2 << self.K
         self.nk_table = np.zeros((self.N, patterns), dtype="float")
-        for i in utilities.show_completion(range(self.N), self.N, "NK Table"):
-            # print "Starting column", i, "of", self.N, "in the NK table"
+        for i in show_completion(range(self.N), self.N, "NK Table"):
             for pattern in range(patterns):
                 relative_indexes = nk.int_to_set_bits(pattern)
                 absolute_indexes = [(i + r) % self.N for r in relative_indexes]
@@ -105,13 +104,12 @@ class NKClassifierOVR(BaseClassifier):
         self.cls_to_index = {cls: np.where(cls == self.classes_)[0][0]
                              for cls in self.classes_}
 
-        for i in range(self.N):
-            print "Starting output", i, "of", self.N
+        for i in show_completion(range(self.N), self.N, "Binning data"):
             for pattern in range(self.patterns):
                 absolute_indexes = self.pattern_to_indexes(pattern, i)
                 self.outputs[i].fit(absolute_indexes, data, target)
-        for i, cls in enumerate(self.classes_):
-            print "Solving NK Table for class", i, "of", len(self.classes_)
+        for i, cls in show_completion(enumerate(self.classes_),
+                                      len(self.classes_), "Solving Class NK"):
             self.solve_nk_table(cls)
 
     def solve_nk_table(self, cls):
@@ -157,8 +155,8 @@ class NKClassifierOVR(BaseClassifier):
 
     def predict_using_numbers(self, data):
         probs = np.empty((data.shape[0], self.classes_.shape[0]))
-        for i, cls in enumerate(self.classes_):
-            print "Predicting class", i, "of", len(self.classes_)
+        for i, cls in show_completion(enumerate(self.classes_),
+                                      len(self.classes_), "Predicting class"):
             probs[:, i] = self.get_class_probabilities(data, cls)
         columns = np.argmax(probs, axis=1)
         return self.classes_[columns]
