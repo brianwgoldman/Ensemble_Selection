@@ -51,6 +51,7 @@ class NKClassifier(BaseClassifier):
                               range(self.K + 1) if circular[i + j]]
             self.outputs[i].set_params(feature_subset)
         print "Best single output estimate:", max(self.output_scores), self.output_scores.mean()
+        print "Selected:", self.selected
 
     def fit(self, data, target):
         self.build_nk_table(data, target)

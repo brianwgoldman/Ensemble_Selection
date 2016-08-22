@@ -3,7 +3,29 @@ import math
 import numpy as np
 
 
-class MiddleLayer(object):
+class BaseMiddleLayer(object):
+    def __init__(self, config):
+        raise NotImplementedError()
+
+    def fit(self, data, target):
+        raise NotImplementedError()
+
+    def predict(self, data):
+        raise NotImplementedError()
+
+
+class NoAction(BaseMiddleLayer):
+    def __init__(self, config):
+        pass
+
+    def fit(self, data, target):
+        pass
+
+    def predict(self, data):
+        return data
+
+
+class Nodes(BaseMiddleLayer):
 
     def __init__(self, config):
         self.N = config['N']
@@ -27,7 +49,7 @@ class MiddleLayer(object):
         return np.vstack(columns).transpose()
 
 
-class RandomizeLayer(MiddleLayer):
+class Randomize(BaseMiddleLayer):
 
     def __init__(self, config):
         self.N = config['N']

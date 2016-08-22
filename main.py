@@ -38,6 +38,8 @@ parser.add_argument('-problem_file', type=str,
 parser.add_argument('-training_percentage', type=float, default=0.7,
                     help='Percentage of all data to use during training')
 
+parser.add_argument('-middle_layer', type=str, default="Randomize",
+                    help='Processing to do before attaching the ensemble method')
 
 parser.add_argument('-output_node_type', type=str,
                     help='What type of output nodes to use')
@@ -45,7 +47,7 @@ parser.add_argument('-output_node_type', type=str,
 parser.add_argument('-ensemble', type=str,
                     help='What type of ensemble to use')
 
-parser.add_argument('-threshold', type=float,
+parser.add_argument('-threshold', type=str, default="zero",
                     help='Cutoff used for single class classification')
 
 
@@ -97,10 +99,10 @@ else:
         testing_target = np.load(f)
 
 # Intermediate processing
-middle = middle_layer.RandomizeLayer(config)
+middle = all_subclasses(middle_layer.BaseMiddleLayer)[config['middle_layer']](config)
 middle.fit(training_data, training_target)
 transformed_data = middle.predict(training_data)
-print "Transformed Data"
+print "Transformed Data", transformed_data.shape
 classifier = all_subclasses(ensemble_classifier.BaseClassifier)[config['ensemble']](config)
 
 classifier.fit(transformed_data, training_target)

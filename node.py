@@ -97,6 +97,7 @@ class SKLearn(BaseNode):
         self.set_params(feature_subset)
         frequencies = Counter(target)
         self.most_common = max(frequencies.keys(), key=frequencies.get)
+        self.classes_ = np.array(sorted(set(target)))
         if len(self.feature_subset) > 0:
             self.classifier.fit(data[:, self.feature_subset], target)
 
@@ -127,6 +128,8 @@ class RandomWeights(BaseNode):
         # TODO Rename probabilities to "count", as that is what it stores
         self.probability_store = {}
         self.probabilities = []
+        self.threshold_default = 0 if config['threshold'] == 'zero' else None
+        self.threshold_store = defaultdict(lambda: self.threshold_default)
 
     def get_weight(self, feature):
         try:
@@ -143,12 +146,16 @@ class RandomWeights(BaseNode):
         try:
             self.probabilities = self.probability_store[as_tuple]
             self.actual_probs = utilities.counts_to_probabilities(self.probabilities)
+            self.threshold = self.threshold_store[as_tuple]
         except KeyError:
             self.probabilities = None
             self.actual_probs = None
+            self.threshold = self.threshold_default
 
     def bin_data(self, data):
         if len(self.feature_subset) == 0:
+            self.threshold = 0
+            self.threshold_store[self.feature_subset] = 0
             return np.zeros(data.shape[0], dtype="int")
         used = data[:, self.feature_subset]
         selected_weights = np.empty(len(self.feature_subset))
@@ -156,7 +163,10 @@ class RandomWeights(BaseNode):
             selected_weights[i] = self.get_weight(feature)
         product = np.dot(used, selected_weights)
         assert(product.shape[0] == data.shape[0])
-        return (product > 0).astype('int')
+        if self.threshold is None:
+            self.threshold = np.random.choice(product)
+            self.threshold_store[self.feature_subset] = self.threshold
+        return (product > self.threshold).astype('int')
 
     def fit(self, feature_subset, data, target):
         self.set_params(feature_subset)
