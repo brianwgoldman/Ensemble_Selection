@@ -126,7 +126,7 @@ if config['compare']:
     from sklearn import linear_model, svm
     clf = linear_model.LogisticRegression()
     print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
-    clf = svm.SVC()
+    clf = svm.LinearSVC()
     print "BasicSVM:", clf.fit(training_data, training_target).score(testing_data, testing_target)
     clf = linear_model.Perceptron()
     print "Perceptn:", clf.fit(training_data, training_target).score(testing_data, testing_target)

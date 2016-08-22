@@ -51,6 +51,7 @@ class WeightedVote(BaseNode):
         self.set_params(feature_subset)
         frequencies = Counter(target)
         self.most_common = max(frequencies.keys(), key=frequencies.get)
+        self.classes_ = np.array(sorted(set(target)))
 
     def predict(self, data):
         if len(self.feature_subset) == 0:
@@ -74,12 +75,69 @@ class WeightedVote(BaseNode):
                    for estimate, actual in zip(estimates, target)) / float(len(target))
 
 
+class WeightedDecisions(BaseNode):
+
+    def __init__(self, config):
+        self.feature_subset = []
+        self.saved_weights = {}
+        self.weights = None
+
+    def set_params(self, feature_subset, *args, **kwargs):
+        self.feature_subset = feature_subset
+        weights = []
+        for feature in self.feature_subset:
+            try:
+                weights.append(self.saved_weights[feature])
+            except KeyError:
+                # Generate weights only once per feature
+                weight = -np.log2(np.random.random())
+                self.saved_weights[feature] = weight
+                weights.append(weight)
+        self.weights = np.array(weights)
+        # Scale the actually used weights to sum to 1
+        total = self.weights.sum()
+        self.weights /= total
+
+    def fit(self, feature_subset, data, target):
+        self.set_params(feature_subset)
+        frequencies = Counter(target)
+        self.most_common = max(frequencies.keys(), key=frequencies.get)
+        self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {cls: np.where(cls == self.classes_)[0][0]
+                             for cls in self.classes_}
+        self.most_common_index = self.cls_to_index[self.most_common]
+
+    def decision_function(self, data):
+        if len(self.feature_subset) == 0:
+            result = np.zeros((data.shape[0], self.classes_.shape[0]))
+            result[:, self.most_common_index] = 1
+            # TODO Set to most common
+            return result
+        used = data[:, self.feature_subset, :]
+        probs = (used * self.weights[:, None]).sum(axis=1)
+        assert(probs.shape == (data.shape[0], self.classes_.shape[0]))
+        return probs
+
+    def predict(self, data):
+        selected = self.decision_function(data).argmax(axis=1)
+        return self.classes_[selected]
+
+    def score(self, feature_subset, data, target):
+        self.fit(feature_subset, data, target)
+        estimates = self.predict(data)
+        # extract only the used columns
+        return sum(estimate == actual
+                   for estimate, actual in zip(estimates, target)) / float(len(target))
+
+
 class SKLearn(BaseNode):
+    options = {clf.__name__: clf for clf in [svm.LinearSVC,
+                                             linear_model.LogisticRegression,
+                                             linear_model.Perceptron]}
 
     def __init__(self, config):
         # TODO Make configuration more flexible
-        self.classifier_class = vars(linear_model)[config['linear_classifier']]
-        #self.classifier_class = svm.SVC
+        self.classifier_class = self.options[config['linear_classifier']]
         self.stored_classifiers = {}
 
     def set_params(self, feature_subset, *args, **kwargs):

@@ -1,6 +1,7 @@
 import node
 import math
 import numpy as np
+from utilities import show_completion, even_class_split_dataset
 
 
 class BaseMiddleLayer(object):
@@ -35,18 +36,18 @@ class Nodes(BaseMiddleLayer):
 
     def fit(self, data, target):
         sample_size = int(math.ceil(data.shape[1] * self.sample_percentage))
-        row_sample_size = int(math.ceil(data.shape[0] * 0.9))
-        for i, output in enumerate(self.outputs):
-            print "Starting middle layer output", i, "of", len(self.outputs)
+        for output in show_completion(self.outputs, self.N,
+                                      "Building Middle layer"):
             feature_subset = np.random.choice(data.shape[1], sample_size,
                                               replace=False)
-            row_subset = np.random.choice(data.shape[0], row_sample_size,
-                                          replace=False)
-            output.fit(feature_subset, data[row_subset, :], target[row_subset])
+            train, _ = even_class_split_dataset(data, target, self.sample_percentage)
+            output.fit(feature_subset, train[0], train[1])
 
     def predict(self, data):
-        columns = [output.predict(data) for output in self.outputs]
-        return np.vstack(columns).transpose()
+        columns = [output.decision_function(data) for output in self.outputs]
+        combined = np.swapaxes(np.array(columns), 0, 1)
+        return combined
+        # return np.vstack(columns).transpose()
 
 
 class Randomize(BaseMiddleLayer):
