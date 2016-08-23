@@ -57,11 +57,11 @@ def counts_to_probabilities(counts):
 
 
 def show_completion(iterable, length, message):
-    start_time = time.clock()
+    start_time = time.time()
     previous = None
     for i, x in enumerate(iterable):
         yield x
-        elapsed = time.clock() - start_time
+        elapsed = time.time() - start_time
         time_per_loop = (elapsed / (i + 1)) / 60
         assert(i < length)
         remaining = round(time_per_loop * (length - i - 1), 2)

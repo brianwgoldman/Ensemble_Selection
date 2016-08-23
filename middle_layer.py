@@ -44,10 +44,12 @@ class Nodes(BaseMiddleLayer):
             output.fit(feature_subset, train[0], train[1])
 
     def predict(self, data):
+        columns = [output.predict(data) for output in self.outputs]
+        return np.vstack(columns).transpose()
         columns = [output.decision_function(data) for output in self.outputs]
         combined = np.swapaxes(np.array(columns), 0, 1)
         return combined
-        # return np.vstack(columns).transpose()
+
 
 
 class Randomize(BaseMiddleLayer):

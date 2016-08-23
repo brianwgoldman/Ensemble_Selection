@@ -115,10 +115,11 @@ from collections import defaultdict
 confusion = defaultdict(int)
 for prediction, actual in zip(predictions, testing_target):
     confusion[prediction, actual] += 1
+print "Classes with at least one correct:", sum(p == a for p, a in confusion.keys())
 correct = 0
 for pair, count in confusion.items():
     if pair[0] == pair[1]:
-        print pair, count
+        # print pair, count
         correct += count
 
 print "Ensemble:", float(correct) / predictions.shape[0]

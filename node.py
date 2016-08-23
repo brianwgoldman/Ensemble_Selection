@@ -30,9 +30,10 @@ class WeightedVote(BaseNode):
         self.feature_subset = []
         self.saved_weights = {}
         self.weights = []
+        self.saved_scores = {}
 
     def set_params(self, feature_subset, *args, **kwargs):
-        self.feature_subset = feature_subset
+        self.feature_subset = tuple(feature_subset)
         weights = []
         for feature in self.feature_subset:
             try:
@@ -46,33 +47,55 @@ class WeightedVote(BaseNode):
         # Scale the actually used weights to sum to 1
         total = self.weights.sum()
         self.weights /= total
+        try:
+            self.cls_scores = self.saved_scores[self.feature_subset]
+        except KeyError:
+            self.cls_scores = None
 
     def fit(self, feature_subset, data, target):
         self.set_params(feature_subset)
         frequencies = Counter(target)
         self.most_common = max(frequencies.keys(), key=frequencies.get)
         self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {v: i for i, v in enumerate(self.classes_)}
+        predictions = self.predict(data)
+        self.cls_scores = np.zeros(len(self.classes_))
+        for predicted, actual in zip(predictions, target):
+            index = self.cls_to_index[actual]
+            if predicted == actual:
+                self.cls_scores[index] += 1
+            else:
+                self.cls_scores[index] -= 1
+        self.saved_scores[self.feature_subset] = self.cls_scores
+
+    def decision_function(self, data):
+        probs = np.zeros((data.shape[0], self.classes_.shape[0]))
+        if len(self.feature_subset) == 0:
+            # probs[:, self.cls_to_index[self.most_common]] = 1
+            return probs
+        for i, col in enumerate(self.feature_subset):
+            weight = self.weights[i]
+            for row in range(data.shape[0]):
+                cls_index = self.cls_to_index[data[row, col]]
+                probs[row, cls_index] += weight
+        return probs
 
     def predict(self, data):
-        if len(self.feature_subset) == 0:
-            result = np.array([self.most_common for _ in range(data.shape[0])])
-            return result
-        used = data[:, self.feature_subset]
-        # TODO This probably needs optimization
-        ballots = [defaultdict(float) for _ in range(used.shape[0])]
-        for col in range(used.shape[1]):
-            weight = self.weights[col]
-            for row in range(used.shape[0]):
-                ballots[row][used[row][col]] = weight
-        predictions = [max(vote.keys(), key=vote.get) for vote in ballots]
-        return np.array(predictions)
+        selected = self.decision_function(data).argmax(axis=1)
+        return self.classes_[selected]
 
     def score(self, feature_subset, data, target):
-        self.fit(feature_subset, data, target)
-        estimates = self.predict(data)
-        # extract only the used columns
-        return sum(estimate == actual
-                   for estimate, actual in zip(estimates, target)) / float(len(target))
+        self.set_params(feature_subset)
+        return self.cls_scores.sum()
+
+    def score_class(self, feature_subset, cls):
+        self.set_params(feature_subset)
+        return self.cls_scores[self.cls_to_index[cls]]
+
+    def decision_function_class(self, data, cls):
+        # TODO This needs to be faster
+        probs = self.decision_function(data)
+        return utilities.counts_to_probabilities(probs)[:, self.cls_to_index[cls]]
 
 
 class WeightedDecisions(BaseNode):
