@@ -36,6 +36,8 @@ def even_class_split_dataset(data, target, percentage):
         np.random.shuffle(indexes)
         first_indexes.extend(indexes[:divider])
         second_indexes.extend(indexes[divider:])
+    np.random.shuffle(first_indexes)
+    np.random.shuffle(second_indexes)
     return ((data[first_indexes, :], target[first_indexes]),
             (data[second_indexes, :], target[second_indexes]))
 
