@@ -65,7 +65,7 @@ class WeightedVote(BaseNode):
             if predicted == actual:
                 self.cls_scores[index] += 1
             else:
-                self.cls_scores[index] -= 1
+                self.cls_scores[index] -= 0
         self.saved_scores[self.feature_subset] = self.cls_scores
 
     def decision_function(self, data):
@@ -170,7 +170,7 @@ class SKLearn(BaseNode):
         try:
             self.classifier = self.stored_classifiers[as_tuple]
         except KeyError:
-            self.classifier = self.classifier_class()
+            self.classifier = self.classifier_class(shuffle=True)
             self.stored_classifiers[as_tuple] = self.classifier
         # TODO Consider setting the parameters of the classifier itself
 
