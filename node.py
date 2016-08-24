@@ -294,3 +294,44 @@ class RandomWeights(BaseNode):
                   new_bins[0][1] + new_bins[1][1]]]
         base_entropy = utilities.weighted_entropy(joined)
         return base_entropy - result
+
+
+class ResNetNode(BaseNode):
+    full_weights = None
+    full_bias = None
+
+    def __init__(self, config):
+        if ResNetNode.full_weights is None:
+            with open("weights.txt", "r") as f:
+                raw = np.array(f.read().strip().split(), dtype="float64")
+            ResNetNode.full_weights = raw.reshape((1000, 2048)).transpose()
+        if ResNetNode.full_bias is None:
+            with open("bias.txt", "r") as f:
+                raw = np.array(f.read().strip().split(), dtype="float64")
+            ResNetNode.full_bias = raw
+
+    def set_params(self, feature_subset, *args, **kwargs):
+        self.feature_subset = tuple(feature_subset)
+
+    def fit(self, feature_subset, data, target):
+        self.set_params(feature_subset)
+        self.classes_ = np.array(sorted(set(target)))
+
+    def decision_function(self, data):
+        if len(self.feature_subset) == 0:
+            return np.zeros((data.shape[0], len(self.classes_)))
+        weights = ResNetNode.full_weights[self.feature_subset, :]
+        used = data[:, self.feature_subset]
+        prob = np.dot(used, weights)
+        return prob + ResNetNode.full_bias
+
+    def predict(self, data):
+        selected = self.decision_function(data).argmax(axis=1)
+        assert(selected.shape[0] == data.shape[0])
+        return self.classes_[selected]
+
+    def score(self, feature_subset, data, target):
+        self.set_params(feature_subset)
+        estimates = self.predict(data)
+        return sum(estimate == actual
+                   for estimate, actual in zip(estimates, target)) / float(len(target))
