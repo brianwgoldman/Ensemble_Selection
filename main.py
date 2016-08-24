@@ -83,11 +83,6 @@ if config['cfg_out'] != None and config['cfg_out'] != "none":
 
 if config['problem_file'] is not None:
     data, target = data_manager.load_problem(config['problem_file'])
-    '''
-    from sklearn import datasets
-    dataset = datasets.load_digits()
-    data, target = dataset.data, dataset.target
-    # '''
 
     train, test = even_class_split_dataset(data, target, config['training_percentage'])
     training_data, training_target = train
@@ -130,9 +125,9 @@ for pair, count in confusion.items():
 print "Ensemble:", float(correct) / predictions.shape[0]
 if config['compare']:
     from sklearn import linear_model, svm
-    # clf = linear_model.LogisticRegression()
-    # print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
-    # clf = svm.LinearSVC()
-    # print "BasicSVM:", clf.fit(training_data, training_target).score(testing_data, testing_target)
-    clf = linear_model.Perceptron(shuffle=True)
+    clf = linear_model.LogisticRegression()
+    print "Logistic:", clf.fit(training_data, training_target).score(testing_data, testing_target)
+    clf = svm.LinearSVC()
+    print "BasicSVM:", clf.fit(training_data, training_target).score(testing_data, testing_target)
+    clf = linear_model.Perceptron()
     print "Perceptn:", clf.fit(training_data, training_target).score(testing_data, testing_target)

@@ -38,9 +38,8 @@ class Nodes(BaseMiddleLayer):
         sample_size = int(math.ceil(data.shape[1] * self.sample_percentage))
         for output in show_completion(self.outputs, self.N,
                                       "Building Middle layer"):
-            feature_subset = np.arange(data.shape[1])
-            # feature_subset = np.random.choice(data.shape[1], sample_size,
-            #                                  replace=False)
+            feature_subset = np.random.choice(data.shape[1], sample_size,
+                                              replace=False)
             train, _ = even_class_split_dataset(data, target, self.sample_percentage)
             output.fit(feature_subset, train[0], train[1])
 
@@ -78,23 +77,12 @@ class RandomProjections(BaseMiddleLayer):
 
     def fit(self, data, target):
         shape = (data.shape[1], self.N)
-        # '''
         self.projection = np.random.uniform(-1, 1, shape)
-        return
+        # return
         for col in range(shape[1]):
             number = np.random.choice(shape[0]) + 1
             select = np.random.choice(shape[0], number, replace=False)
             self.projection[select, col] = 0
-        # self.projection = np.random.random(shape)
-        '''
-        elements = shape[0] * shape[1]
-        long = np.random.uniform(-1, 1, elements)
-        select = np.random.choice(elements, elements / 2, replace=False)
-        long[select] = 0
-        self.projection = long.reshape(shape)
-        print (self.projection == 0).sum(axis=0).min()
-        sys.exit()
-        # '''
 
     def predict(self, data):
         return np.dot(data, self.projection)
