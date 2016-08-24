@@ -35,11 +35,9 @@ class Nodes(BaseMiddleLayer):
         self.outputs = [node.SKLearn(config) for _ in range(config['N'])]
 
     def fit(self, data, target):
-        sample_size = int(math.ceil(data.shape[1] * self.sample_percentage))
+        feature_subset = np.arange(data.shape[1])
         for output in show_completion(self.outputs, self.N,
                                       "Building Middle layer"):
-            feature_subset = np.random.choice(data.shape[1], sample_size,
-                                              replace=False)
             train, _ = even_class_split_dataset(data, target, self.sample_percentage)
             output.fit(feature_subset, train[0], train[1])
 

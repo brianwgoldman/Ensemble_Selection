@@ -64,8 +64,6 @@ class WeightedVote(BaseNode):
             index = self.cls_to_index[actual]
             if predicted == actual:
                 self.cls_scores[index] += 1
-            else:
-                self.cls_scores[index] -= 1
         self.saved_scores[self.feature_subset] = self.cls_scores
 
     def decision_function(self, data):
