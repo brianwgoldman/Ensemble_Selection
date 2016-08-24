@@ -2,7 +2,7 @@ import nk
 import node
 import numpy as np
 from collections import defaultdict
-from utilities import show_completion, even_class_split_dataset
+from utilities import show_completion
 
 
 class BaseClassifier(object):
@@ -240,7 +240,6 @@ class SelectedForest(BaseClassifier):
 class Ensemble(BaseClassifier):
     def __init__(self, config):
         self.N = config['N']
-        self.sample_percentage = config['sample_percentage']
         self.config = config
 
     def fit(self, data, target):
@@ -248,10 +247,16 @@ class Ensemble(BaseClassifier):
         self.classes_ = np.array(sorted(set(target)))
         self.cls_to_index = {v: i for i, v in enumerate(self.classes_)}
         all_features = np.arange(data.shape[1])
+        cls_indexes = defaultdict(list)
+        for i, t in enumerate(target):
+            cls_indexes[t].append(i)
         for output in show_completion(self.outputs,
                                       self.N, 'Fitting Classifier'):
-            train, _ = even_class_split_dataset(data, target, self.sample_percentage)
-            output.fit(all_features, train[0], train[1])
+            rows = [np.random.choice(indexes)
+                    for indexes in cls_indexes.values()]
+            train_data = data[rows, :]
+            train_target = target[rows]
+            output.fit(all_features, train_data, train_target)
 
     def decision_function(self, data):
         probs = np.zeros((data.shape[0], self.classes_.shape[0]))
