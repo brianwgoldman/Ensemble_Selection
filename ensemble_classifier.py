@@ -2,7 +2,7 @@ import nk
 import node
 import numpy as np
 from collections import defaultdict
-from utilities import show_completion
+from utilities import show_completion, even_class_split_dataset
 
 
 class BaseClassifier(object):
@@ -234,4 +234,39 @@ class SelectedForest(BaseClassifier):
     def predict_using_numbers(self, data):
         probs = self.decision_function(data)
         columns = np.argmax(probs, axis=1)
+        return self.outputs[0].classes_[columns]
+
+
+class Ensemble(BaseClassifier):
+    def __init__(self, config):
+        self.N = config['N']
+        self.sample_percentage = config['sample_percentage']
+        self.config = config
+
+    def fit(self, data, target):
+        self.outputs = [node.SKLearn(self.config) for _ in range(self.N)]
+        self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {v: i for i, v in enumerate(self.classes_)}
+        all_features = np.arange(data.shape[1])
+        for output in show_completion(self.outputs,
+                                      self.N, 'Fitting Classifier'):
+            train, _ = even_class_split_dataset(data, target, self.sample_percentage)
+            output.fit(all_features, train[0], train[1])
+
+    def decision_function(self, data):
+        probs = np.zeros((data.shape[0], self.classes_.shape[0]))
+        for output in show_completion(self.outputs,
+                                      self.N, "Predicting Output"):
+            column = output.predict(data)
+            for i, cls in enumerate(column):
+                cls_index = self.cls_to_index[cls]
+                probs[i][cls_index] += 1
+        return probs
+
+    def predict_using_numbers(self, data):
+        probs = self.decision_function(data)
+        print probs[:10, :]
+        print np.max(probs, axis=1).min()
+        columns = np.argmax(probs, axis=1)
+        # TODO Check for ties
         return self.outputs[0].classes_[columns]

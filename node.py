@@ -235,8 +235,8 @@ class RandomWeights(BaseNode):
 
     def bin_data(self, data):
         if len(self.feature_subset) == 0:
-            self.threshold = 0
-            self.threshold_store[self.feature_subset] = 0
+            self.threshold = self.threshold_default
+            self.threshold_store[self.feature_subset] = self.threshold_default
             return np.zeros(data.shape[0], dtype="int")
         used = data[:, self.feature_subset]
         selected_weights = np.empty(len(self.feature_subset))
