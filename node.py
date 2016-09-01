@@ -243,7 +243,7 @@ class RandomWeights(BaseNode):
         product = np.dot(used, selected_weights)
         assert(product.shape[0] == data.shape[0])
         if self.threshold is None:
-            self.threshold = np.random.choice(product)
+            self.threshold = np.median(product)
             self.threshold_store[self.feature_subset] = self.threshold
         return (product > self.threshold).astype('int')
 
@@ -292,8 +292,95 @@ class RandomWeights(BaseNode):
         result = utilities.weighted_entropy(new_bins)
         joined = [[new_bins[0][0] + new_bins[1][0],
                   new_bins[0][1] + new_bins[1][1]]]
+        # return np.array(joined).max(axis=1).sum()
         base_entropy = utilities.weighted_entropy(joined)
         return base_entropy - result
+
+
+class SplittingNode(BaseNode):
+    def __init__(self, config):
+        self.slope_store = {}
+        self.split_store = {}
+        self.count_store = {}
+
+    def bin_data(self, data):
+        return (np.dot(data[:, self.feature_subset], self.slope) > self.split).astype("int")
+
+    def set_params(self, feature_subset):
+        self.feature_subset = tuple(feature_subset)
+        try:
+            self.slope = self.slope_store[self.feature_subset]
+            self.split = self.split_store[self.feature_subset]
+            self.count = self.count_store[self.feature_subset]
+            self.probabilities = utilities.counts_to_probabilities(self.count)
+        except KeyError:
+            self.slope = None
+            self.split = None
+            self.count = None
+
+    def fit(self, feature_subset, data, target):
+        self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {v: i for i, v in enumerate(self.classes_)}
+        self.feature_subset = tuple(feature_subset)
+        # cls_1, cls_2 = np.random.choice(self.classes_, 2, replace=False)
+        # p1 = data[(target == cls_1), :][:, self.feature_subset].mean(axis=0)
+        # p2 = data[(target == cls_2), :][:, self.feature_subset].mean(axis=0)
+        # division = np.random.choice([True, False], data.shape[0])
+        side = {cls: np.random.choice([True, False]) for cls in self.classes_}
+        division = np.array([side[cls] for cls in target])
+
+        p1 = data[division, :][:, self.feature_subset].mean(axis=0)
+        p2 = data[np.logical_not(division), :][:, self.feature_subset].mean(axis=0)
+
+        self.slope = p2 - p1
+        middle = (p1 + p2) / 2.  # TODO You can probably move this division
+        self.split = (self.slope * middle).sum()
+        bins = self.bin_data(data)
+        assert(bins.shape == target.shape)
+        self.count = np.zeros([2, self.classes_.shape[0]])
+        for i, bin_val in enumerate(bins):
+            self.count[bin_val][self.cls_to_index[target[i]]] += 1
+        self.slope_store[self.feature_subset] = self.slope
+        self.split_store[self.feature_subset] = self.split
+        self.count_store[self.feature_subset] = self.count
+        self.probabilities = utilities.counts_to_probabilities(self.count)
+
+    def fit_original(self, feature_subset, data, target):
+        self.classes_ = np.array(sorted(set(target)))
+        self.cls_to_index = {v: i for i, v in enumerate(self.classes_)}
+        self.feature_subset = tuple(feature_subset)
+        p1_index = np.random.choice(target.shape[0])
+        while True:
+            p2_index = np.random.choice(target.shape[0])
+            if target[p1_index] != target[p2_index]:
+                break
+        p1 = data[p1_index, self.feature_subset]
+        p2 = data[p2_index, self.feature_subset]
+        self.slope = p2 - p1
+        middle = (p1 + p2) / 2.  # TODO You can probably move this division
+        self.split = (self.slope * middle).sum()
+        bins = self.bin_data(data)
+        assert(bins.shape == target.shape)
+        assert(bins[p1_index] != bins[p2_index] or p1 == p2)
+        self.count = np.zeros([2, self.classes_.shape[0]])
+        for i, bin_val in enumerate(bins):
+            self.count[bin_val][self.cls_to_index[target[i]]] += 1
+        self.slope_store[self.feature_subset] = self.slope
+        self.split_store[self.feature_subset] = self.split
+        self.count_store[self.feature_subset] = self.count
+        self.probabilities = utilities.counts_to_probabilities(self.count)
+
+    def score(self, feature_subset, data, target):
+        return self.count.max(axis=1).min()
+
+    def decision_function(self, data):
+        bins = self.bin_data(data)
+        return self.probabilities[bins]
+
+    def predict(self, data):
+        selected = self.decision_function(data).argmax(axis=1)
+        assert(selected.shape[0] == data.shape[0])
+        return self.classes_[selected]
 
 
 class ResNetNode(BaseNode):

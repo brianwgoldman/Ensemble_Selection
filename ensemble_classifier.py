@@ -59,6 +59,7 @@ class NKClassifier(BaseClassifier):
         self.configure_outputs()
 
     def predict(self, data):
+        assert(False)
         votes = [defaultdict(float) for _ in range(data.shape[0])]
         for o in range(self.N):
             labels = self.outputs[o].predict(data)
@@ -113,6 +114,7 @@ class NKClassifierOVR(BaseClassifier):
         for i, cls in show_completion(enumerate(self.classes_),
                                       len(self.classes_), "Solving Class NK"):
             self.solve_nk_table(cls)
+        print [mask.sum() for mask in self.class_masks.values()]
 
     def solve_nk_table(self, cls):
         nk_table = np.zeros((self.N, self.patterns), dtype="float")
@@ -136,7 +138,6 @@ class NKClassifierOVR(BaseClassifier):
         self.configure_patterns[cls] = configure_patterns
 
     def get_class_probabilities(self, data, cls):
-        column = self.cls_to_index[cls]
         total_weight = 0
         weights = self.output_scores[cls]
         patterns = self.configure_patterns[cls]
@@ -193,12 +194,14 @@ class SeparateNKClassifier(BaseClassifier):
 def make_outputs(config, data, target):
     N = config['N']
     K = config['K']
+    node_cls = node.get_output_node_class(config)
     produced = 0
     while produced < N:
         number = np.random.choice(K) + 1
         indexes = np.random.choice(data.shape[1], number, replace=False)
-        output = node.RandomWeights(config)
+        output = node_cls(config)
         output.fit(indexes, data, target)
+        # TODO Consider removing this score
         score = output.score(indexes, data, target)
         if score > 0:
             yield output, score
@@ -219,6 +222,7 @@ class SelectedForest(BaseClassifier):
         for output, score in show_completion(gen, self.N, "Generating Trees"):
             self.outputs.append(output)
             self.output_scores.append(score)
+        print sum(self.output_scores) / self.N
 
     def decision_function(self, data):
         to_class = self.outputs[0].classes_
@@ -227,8 +231,7 @@ class SelectedForest(BaseClassifier):
         for o in show_completion(range(O), O, "Aggregating outputs"):
             assert((to_class == self.outputs[o].classes_).all())
             output_probs = self.outputs[o].decision_function(data)
-            weight = self.output_scores[o]
-            probs += (output_probs * weight)
+            probs += output_probs
         return probs
 
     def predict_using_numbers(self, data):
