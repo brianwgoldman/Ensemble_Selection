@@ -236,11 +236,9 @@ class RandomWeights(BaseNode):
             self.threshold = self.threshold_default
             self.threshold_store[self.feature_subset] = self.threshold_default
             return np.zeros(data.shape[0], dtype="int")
-        used = data[:, self.feature_subset]
-        selected_weights = np.empty(len(self.feature_subset))
-        for i, feature in enumerate(self.feature_subset):
-            selected_weights[i] = self.get_weight(feature)
-        product = np.dot(used, selected_weights)
+        product = np.zeros(data.shape[0])
+        for feature in self.feature_subset:
+            product += data[:, feature] * self.get_weight(feature)
         assert(product.shape[0] == data.shape[0])
         if self.threshold is None:
             self.threshold = np.median(product)
@@ -272,7 +270,9 @@ class RandomWeights(BaseNode):
         return cls_probs[bin_guide]
 
     def predict(self, data):
-        selected = self.decision_function(data).argmax(axis=1)
+        bin_to_index = self.actual_probs.argmax(axis=1)
+        assert(bin_to_index.shape[0] == 2)
+        selected = bin_to_index[self.bin_data(data)]
         assert(selected.shape[0] == data.shape[0])
         return self.classes_[selected]
 
