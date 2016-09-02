@@ -198,6 +198,38 @@ class SKLearn(BaseNode):
             return sum(estimate == actual for estimate, actual in zip(predictions, target)) / target.shape[0]
 
 
+class LightWeights(object):
+    def __init__(self, feature_subset):
+        self.threshold = None
+        self.feature_subset = feature_subset
+        self.weights = {feature: np.random.uniform(-1, 1)
+                        for feature in self.feature_subset}
+        self.probabilities = None
+
+    def get_product(self, data):
+        product = np.zeros(data.shape[0])
+        for feature in self.feature_subset:
+            product += data[:, feature] * self.weights[feature]
+        return product
+
+    def bin_product(self, product):
+        return (product > self.threshold).astype('int')
+
+    def fit(self, data, target):
+        classes = np.array(sorted(set(target)))
+        cls_to_index = {v: i for i, v in enumerate(classes)}
+        product = self.get_product(data)
+        self.threshold = np.median(product)
+        bin_guide = self.bin_product(product)
+        counts = np.zeros((2, classes.shape[0]))
+        for i, bin_val in enumerate(bin_guide):
+            counts[bin_val][cls_to_index[target[i]]] += 1
+        self.probabilities = utilities.counts_to_probabilities(counts)
+
+    def decision_function(self, data):
+        return self.probabilities[self.bin_product(self.get_product(data))]
+
+
 class RandomWeights(BaseNode):
 
     def __init__(self, config):

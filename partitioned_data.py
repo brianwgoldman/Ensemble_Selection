@@ -75,11 +75,13 @@ def load_problem(folder, partition_style, index):
 if __name__ == '__main__':
     from sklearn import linear_model, svm
     from sklearn.externals import joblib
+    from ensemble_classifier import LightWeightEnsemble
     import argparse
 
     clf_lookup = {'Perceptron': linear_model.Perceptron,
                   'RBFSVM': svm.SVC,
                   'LinearSVM': svm.LinearSVC,
+                  'CuttingPlane': LightWeightEnsemble,
                   }
     clf_option_string = ', '.join(sorted(clf_lookup.keys()))
 

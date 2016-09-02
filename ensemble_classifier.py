@@ -191,6 +191,30 @@ class SeparateNKClassifier(BaseClassifier):
         return self.classes_[columns]
 
 
+class LightWeightEnsemble(object):
+    def fit(self, data, target):
+        N = data.shape[1]
+        self.outputs = []
+        self.classes_ = np.array(sorted(set(target)))
+        for _ in show_completion(range(N), N, "Fitting lightweight"):
+            number = np.random.choice(N) + 1
+            features = np.random.choice(N, number, replace=False)
+            cls = node.LightWeights(features)
+            cls.fit(data, target)
+            self.outputs.append(cls)
+
+    def predict(self, data):
+        probs = np.zeros((data.shape[0], self.classes_.shape[0]))
+        for output in show_completion(self.outputs, len(self.outputs),
+                                      "Aggregating Lightweights"):
+            probs += output.decision_function(data)
+        columns = np.argmax(probs, axis=1)
+        return self.classes_[columns]
+
+    def score(self, data, target):
+        return (self.predict(data) == target).mean()
+
+
 def make_outputs(config, data, target):
     N = config['N']
     K = config['K']
