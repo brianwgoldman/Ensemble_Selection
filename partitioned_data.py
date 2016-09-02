@@ -9,8 +9,8 @@ def load_data(files):
     total_cols = None
     for filename in files:
         pieces = path.basename(filename).split('_')
-        row_counts.append(int(pieces[1]))
-        new_cols = int(pieces[2])
+        row_counts.append(int(pieces[2]))
+        new_cols = int(pieces[3])
         assert(total_cols is None or total_cols == new_cols)
         total_cols = new_cols
     total_rows = sum(row_counts)
@@ -21,6 +21,7 @@ def load_data(files):
         with open(filename, 'r') as f:
             data[used:used + rows, :] = np.load(f)
         used += rows
+        print "Loaded", used, "rows"
     assert(used == total_rows)
     return data
 
@@ -37,8 +38,8 @@ def group_files(files):
     grouped = defaultdict(dict)
     for filename in files:
         pieces = path.basename(filename)[:-4].split('_')
-        partition_number = int(pieces[0])
-        file_type = int(pieces[4])
+        partition_number = int(pieces[1])
+        file_type = pieces[4]
         grouped[partition_number][file_type] = filename
     return grouped
 
@@ -58,6 +59,7 @@ def load_problem(folder, partition_style, index):
     if partition_style == 'all':
         partition_numbers = grouped.keys()
     elif partition_style == 'single':
+        assert(index in grouped.keys())
         partition_numbers = [index]
     elif partition_style == 'all_but_one':
         partition_numbers = [key for key in grouped.keys() if key != index]
@@ -91,7 +93,7 @@ if __name__ == '__main__':
                         help='Which classifier to apply: ' + clf_option_string)
     parser.add_argument('output_file',
                         help='Where to save the classifier')
-    parser.add_argument('-index', type=int, default=0,
+    parser.add_argument('-index', type=int, default=-1,
                         help='Control which partition is used/excluded')
 
     config = vars(parser.parse_args())
